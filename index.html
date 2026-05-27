@@ -1536,13 +1536,13 @@ async function checkAuthorized(user){
     const{data,error}=await sbClient.from('usuarios_autorizados').select('nome,cargo').eq('email',user.email).eq('ativo',true).single();
     if(error||!data){
       await sbClient.auth.signOut();
-      showAuthMsg('⛔ Acesso não autorizado. Entre em contato com o administrador do sistema.');
+      showAuthMsg('⛔ '+(error?.message||'Usuário não encontrado na lista de autorizados.')+'  [email: '+user.email+']');
       return false;
     }
     return true;
   }catch(e){
     await sbClient.auth.signOut();
-    showAuthMsg('Erro ao verificar autorização. Tente novamente.');
+    showAuthMsg('Erro: '+e.message);
     return false;
   }
 }
