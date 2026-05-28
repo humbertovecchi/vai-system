@@ -332,6 +332,18 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
 }
 .nf-star{position:fixed;z-index:0;pointer-events:none;opacity:0;
   animation:nfShoot 10s ease-in-out infinite,nfGlow 2s ease-in-out infinite}
+/* ===== PARCELAMENTO ===== */
+.parc-preview{background:var(--bg);border:1.5px solid var(--bdr);border-radius:11px;padding:14px}
+.parc-preview-title{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.parc-rows{display:flex;flex-direction:column;gap:6px}
+.parc-row-p{display:grid;grid-template-columns:62px 1fr 110px;align-items:center;gap:10px}
+.parc-num-tag{font-family:var(--num);font-size:11px;font-weight:800;color:var(--gdd);background:var(--gdp);border:1.5px solid rgba(196,165,90,.25);border-radius:6px;padding:3px 8px;text-align:center;white-space:nowrap}
+.parc-val-tag{font-family:var(--num);font-size:13px;font-weight:700;color:var(--t1);text-align:right}
+.parc-total-row{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1.5px solid var(--bdr);font-size:12.5px;color:var(--t3)}
+.grupo-tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:var(--bl);background:var(--blb);border-radius:4px;padding:2px 7px;cursor:pointer;transition:all .14s;border:none;font-family:'DM Sans',sans-serif}
+.grupo-tag:hover{background:rgba(46,94,160,.2)}
+.grupo-banner{background:var(--blb);border:1.5px solid rgba(46,94,160,.25);border-radius:9px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--bl);font-weight:600}
+.grupo-banner button{background:transparent;border:none;color:var(--bl);cursor:pointer;font-size:16px;padding:0 4px}
 </style>
 </head>
 <body>
@@ -557,6 +569,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
       <button class="tab" onclick="swSubTab(this,'apagar')">⏳ A Pagar</button>
       <button class="tab" onclick="swSubTab(this,'avencer')">🔔 A Vencer</button>
     </div>
+    <div id="grupoBanner" class="grupo-banner" style="display:none"></div>
     <div class="kg3" style="margin-bottom:18px">
       <div class="kc g"><div class="klbl">Receita do Período</div><div class="kval" id="sumRec">R$&nbsp;0</div><div class="kft"><span class="kpr" id="sumRecCt">lançamentos</span></div></div>
       <div class="kc m"><div class="klbl">Despesas do Período</div><div class="kval" id="sumP">R$&nbsp;0</div><div class="kft"><span class="kpr" id="sumPct">lançamentos</span></div></div>
@@ -707,6 +720,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
       <div class="fgp"><label class="fl">Valor (R$)</label><input class="fi" id="fVl" type="number" placeholder="0,00" min="0" step="0.01"></div>
       <div class="fgp" id="fRecWrap"><label class="fl">Recorrência</label><select class="fse" id="fRec" onchange="toggleRec()"><option value="">Sem recorrência</option><option value="semanal">Semanal</option><option value="quinzenal">Quinzenal</option><option value="mensal">Mensal</option><option value="bimestral">Bimestral</option><option value="trimestral">Trimestral</option><option value="anual">Anual</option></select></div>
       <div class="fgp" id="fRecQtdWrap" style="display:none"><label class="fl">Repetições</label><input class="fi" id="fRecQtd" type="number" placeholder="Ex: 12" min="2" max="60" value="12"><div style="font-size:11px;color:var(--t3);margin-top:4px">Nº total de parcelas/lançamentos</div></div>
+      <div class="fgp" id="fParcWrap"><label class="fl">Parcelar em</label><select class="fse" id="fParcN" onchange="toggleParc()"><option value="">À vista</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="10">10x</option><option value="12">12x</option><option value="custom">Personalizado...</option></select></div>
+      <div class="fgp" id="fParcCustomWrap" style="display:none"><label class="fl">Nº de Parcelas</label><input class="fi" id="fParcCustom" type="number" min="2" max="60" placeholder="Ex: 5" oninput="renderParcPreview()"></div>
+      <div class="fgp fc1" id="fParcPreview" style="display:none"></div>
       <div class="fgp fc1" id="fVlRestWrap"><label class="fl">Valor Restante / Saldo Devedor (R$) — Academy</label><input class="fi" id="fVlRest" type="number" placeholder="0,00 — deixe vazio se quitado" min="0" step="0.01"><div style="font-size:11px;color:var(--t3);margin-top:4px">Se preenchido, cria um 2º lançamento pendente automaticamente</div></div>
       <div class="fgp fc1"><label class="fl">Observações</label><textarea class="fta" id="fNo" placeholder="Detalhes adicionais..."></textarea></div>
       <!-- STUDENT SECTION -->
@@ -846,6 +862,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
 <script>
 // ===== STATE =====
 let co='nf', ftab='pagar', subftab='pagas', editTxId=null, txNid=11;
+let grupoNid=1, filterGrupo=null;
 let editStuId=null, stuMode='new', stuNid=5, stuNcode=5;
 let editCursoId=null, cursoNid=4, cursoNcode=4;
 let viewingCursoId=null;
@@ -1104,7 +1121,11 @@ function renderTx(){
   const inPeriod=t=>{if(!filterMes||!filterAno)return true;const[ty,tm]=t.due.split('-');return parseInt(tm)===filterMes&&parseInt(ty)===filterAno;};
   const today=new Date();today.setHours(0,0,0,0);
   const in30=new Date(today);in30.setDate(in30.getDate()+30);
+  // Banner filtro de grupo
+  const bannerEl=document.getElementById('grupoBanner');
+  if(bannerEl){if(filterGrupo){const cnt=txs.filter(t=>t.grupoId===filterGrupo).length;bannerEl.style.display='';bannerEl.innerHTML=`🔗 Exibindo grupo <strong>${filterGrupo}</strong> — ${cnt} parcelas <button onclick="clearGrupoFilter()">✕ Limpar</button>`;}else{bannerEl.style.display='none';}}
   let list=txs.filter(t=>{
+    if(filterGrupo){return t.grupoId===filterGrupo;}
     if(ftab!=='todos'&&t.type!==ftab)return false;
     if(catSel&&t.cat!==catSel)return false;
     if(ftab==='pagar'){
@@ -1132,9 +1153,12 @@ function renderTx(){
       const badge=diff===0?'<span style="background:#E07070;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:5px">Hoje</span>':diff===1?'<span style="background:#E09070;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:5px">Amanhã</span>':`<span style="background:#955251;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:5px">em ${diff}d</span>`;
       dueCell=fmtDate(t.due)+badge;
     }
+    const parcelaBadge=t.parcelaNum?`<span style="font-family:var(--num);font-size:10px;font-weight:800;color:var(--gdd);background:var(--gdp);border:1px solid rgba(196,165,90,.25);border-radius:5px;padding:2px 6px;margin-left:5px">${t.parcelaNum}/${t.parcelaTotal}</span>`:'';
+    const grupoBtn=t.grupoId?`<button class="grupo-tag" onclick="viewGrupo('${t.grupoId}')" title="Ver todas as parcelas deste grupo">🔗 grupo</button>`:'';
+    const catCell=t.parcelaNum?`${t.parcelaNum}/${t.parcelaTotal}`:(t.cat||'—');
     html+=`<tr>
-      <td class="nm" title="${t.name}">${t.name}</td>
-      <td>${t.cat}</td>
+      <td class="nm" title="${t.name}">${t.name}${parcelaBadge}${grupoBtn}</td>
+      <td style="font-size:12px;color:var(--t3)">${catCell}</td>
       <td>${empCell}</td>
       <td>${dueCell}</td>
       <td class="mo">${typeIco}${fmt(t.val)}</td>
@@ -1190,7 +1214,39 @@ function toggleRec(){
   const rec=document.getElementById('fRec')?.value;
   const qw=document.getElementById('fRecQtdWrap');
   if(qw)qw.style.display=(rec&&!isEdit)?'':'none';
+  // Recorrência e parcelamento são mutuamente exclusivos
+  if(rec){const pn=document.getElementById('fParcN');if(pn)pn.value='';const pp=document.getElementById('fParcPreview');if(pp){pp.style.display='none';pp.innerHTML='';}const pcw=document.getElementById('fParcCustomWrap');if(pcw)pcw.style.display='none';}
 }
+function toggleParc(){
+  const v=document.getElementById('fParcN')?.value;
+  const isCustom=v==='custom';
+  const pcw=document.getElementById('fParcCustomWrap');
+  if(pcw)pcw.style.display=isCustom?'':'none';
+  // Parcelamento e recorrência são mutuamente exclusivos
+  if(v){const rec=document.getElementById('fRec');if(rec)rec.value='';const rqw=document.getElementById('fRecQtdWrap');if(rqw)rqw.style.display='none';}
+  if(!isCustom&&v)renderParcPreview();
+  else if(!v){const pp=document.getElementById('fParcPreview');if(pp){pp.style.display='none';pp.innerHTML='';}}
+}
+function renderParcPreview(){
+  const rawN=document.getElementById('fParcN')?.value;
+  const n=rawN==='custom'?parseInt(document.getElementById('fParcCustom')?.value)||0:parseInt(rawN)||0;
+  const pp=document.getElementById('fParcPreview');
+  if(!pp)return;
+  if(n<2){pp.style.display='none';pp.innerHTML='';return;}
+  const totalVal=parseFloat(document.getElementById('fVl')?.value)||0;
+  const parcVal=totalVal>0?Math.round(totalVal/n*100)/100:0;
+  const baseDate=document.getElementById('fDu')?.value||new Date().toISOString().slice(0,10);
+  let rows='';
+  for(let i=0;i<n;i++){
+    let d=new Date(baseDate+'T12:00:00');d.setMonth(d.getMonth()+i);
+    const ds=d.toISOString().slice(0,10);
+    rows+=`<div class="parc-row-p"><span class="parc-num-tag">${i+1}/${n}</span><input class="fi" type="date" id="parcDt${i}" value="${ds}" style="padding:8px 12px;font-size:13px"><span class="parc-val-tag">R$&nbsp;${parcVal.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>`;
+  }
+  pp.innerHTML=`<div class="parc-preview"><div class="parc-preview-title"><span>Parcelas — ajuste os vencimentos</span></div><div class="parc-rows">${rows}</div><div class="parc-total-row"><span>Total: <strong style="color:var(--t1)">R$&nbsp;${totalVal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong></span><span><strong style="color:var(--t1)">${n}x</strong> de <strong style="color:var(--gdd)">R$&nbsp;${parcVal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong></span></div></div>`;
+  pp.style.display='';
+}
+function viewGrupo(gid){filterGrupo=gid;renderTx();}
+function clearGrupoFilter(){filterGrupo=null;renderTx();}
 function checkStu(){
   const isRV=document.getElementById('fCo')?.value==='rv';
   const isRec=document.getElementById('fTy')?.value==='receber';
@@ -1247,6 +1303,10 @@ function openAddTx(){
   const rec=document.getElementById('fRec');if(rec)rec.value='';
   const rqw=document.getElementById('fRecQtdWrap');if(rqw)rqw.style.display='none';
   const frw=document.getElementById('fRecWrap');if(frw)frw.style.display='';
+  const pn=document.getElementById('fParcN');if(pn)pn.value='';
+  const pw=document.getElementById('fParcWrap');if(pw)pw.style.display='';
+  const pcw=document.getElementById('fParcCustomWrap');if(pcw)pcw.style.display='none';
+  const pp=document.getElementById('fParcPreview');if(pp){pp.style.display='none';pp.innerHTML='';}
   populateCursoSelects();toggleCursoField();checkStu();tgStu('new');
   ['sNm','sEm','sPh','sCp','sSt','sBa','sCe','sCi'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const sc=document.getElementById('sCode');if(sc)sc.value=genStuCode();
@@ -1263,6 +1323,8 @@ function editTx(id){
   document.getElementById('fVl').value=t.val;document.getElementById('fNo').value=t.notes||'';
   const frwE=document.getElementById('fRecWrap');if(frwE)frwE.style.display='none';
   const rqwE=document.getElementById('fRecQtdWrap');if(rqwE)rqwE.style.display='none';
+  const pwE=document.getElementById('fParcWrap');if(pwE)pwE.style.display='none';
+  const ppE=document.getElementById('fParcPreview');if(ppE){ppE.style.display='none';ppE.innerHTML='';}
   populateCursoSelects();toggleCursoField();document.getElementById('fCrs').value=t.courseId||'';
   checkStu();const linked=students.find(s=>s.txId===id);
   if(linked){tgStu('exist');setTimeout(()=>{const sel=document.getElementById('sExSel');if(sel){sel.value=linked.id;previewExistStu();}},60);}else tgStu('new');
@@ -1272,6 +1334,22 @@ function saveTx(){
   const name=document.getElementById('fNm').value.trim();if(!name){document.getElementById('fNm').focus();return;}
   const existCat=editTxId?(txs.find(x=>x.id===editTxId)?.cat||''):'';
   const tx={id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,status:document.getElementById('fSt').value,due:document.getElementById('fDu').value||new Date().toISOString().slice(0,10),val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
+  // Parcelamento (só para novos lançamentos)
+  if(!editTxId){
+    const rawPN=document.getElementById('fParcN')?.value;
+    const parcN=rawPN==='custom'?parseInt(document.getElementById('fParcCustom')?.value)||0:parseInt(rawPN)||0;
+    if(parcN>=2){
+      const gid='G'+String(grupoNid++).padStart(5,'0');
+      const parcVal=Math.round(tx.val/parcN*100)/100;
+      for(let i=0;i<parcN;i++){
+        const dtEl=document.getElementById('parcDt'+i);
+        const due=dtEl?.value||tx.due;
+        txs.push({...tx,id:i===0?tx.id:txNid++,val:parcVal,due,grupoId:gid,parcelaNum:i+1,parcelaTotal:parcN});
+      }
+      closeM('txModal');renderTx();saveData();if(document.getElementById('page-cursos').classList.contains('a'))renderCursos();
+      return;
+    }
+  }
   if(editTxId){const i=txs.findIndex(x=>x.id===editTxId);if(i>=0)txs[i]=tx;}else txs.push(tx);
   const sec=document.getElementById('stuSec');
   if(sec&&sec.classList.contains('s')){
@@ -1675,7 +1753,7 @@ async function doSignOut(){
 async function saveData(){
   const payload={
     txs,courses,students,vendedoras,evs,
-    ids:{txNid,cursoNid,cursoNcode,stuNid,stuNcode,vendNid,vendNcode,evNextId}
+    ids:{txNid,cursoNid,cursoNcode,stuNid,stuNcode,vendNid,vendNcode,evNextId,grupoNid}
   };
   // Sempre salva no localStorage como backup
   try{localStorage.setItem('vai_backup',JSON.stringify(payload));}catch(e){}
@@ -1719,6 +1797,7 @@ function applyData(d){
     if(ids.cursoNcode)cursoNcode=ids.cursoNcode;if(ids.stuNid)stuNid=ids.stuNid;
     if(ids.stuNcode)stuNcode=ids.stuNcode;if(ids.vendNid)vendNid=ids.vendNid;
     if(ids.vendNcode)vendNcode=ids.vendNcode;if(ids.evNextId)evNextId=ids.evNextId;
+    if(ids.grupoNid)grupoNid=ids.grupoNid;
   }
   // Re-renderizar a página atual após carregar dados
   refreshCurrentPage();
