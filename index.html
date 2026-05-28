@@ -1378,8 +1378,8 @@ function renderTx(){
     </tr>`;
   });
   body.innerHTML=html;
-  // Summary cards — full period, all types
-  const allP=txs.filter(inPeriod);
+  // Summary cards — full period, filtered by empresa
+  const allP=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co));
   const receber=allP.filter(t=>t.type==='receber');
   const pagar=allP.filter(t=>t.type==='pagar');
   const totalRec=receber.reduce((a,t)=>a+t.val,0);
