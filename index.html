@@ -1334,9 +1334,11 @@ function renderTx(){
   // Banner filtro de grupo
   const bannerEl=document.getElementById('grupoBanner');
   if(bannerEl){if(filterGrupo){const cnt=txs.filter(t=>t.grupoId===filterGrupo).length;bannerEl.style.display='';bannerEl.innerHTML=`🔗 Exibindo grupo <strong>${filterGrupo}</strong> — ${cnt} parcelas <button onclick="clearGrupoFilter()">✕ Limpar</button>`;}else{bannerEl.style.display='none';}}
+  const showAllStatus=ftab==='pagar'&&(subftab==='apagar'||subftab==='avencer');
   let list=txs.filter(t=>{
     if(filterGrupo){return t.grupoId===filterGrupo;}
     if(co!=='all'&&t.co!==co)return false;
+    if(!showAllStatus&&t.status!=='paid')return false;
     if(ftab!=='todos'&&t.type!==ftab)return false;
     if(catSel&&t.cat!==catSel)return false;
     if(ftab==='pagar'){
@@ -1378,8 +1380,8 @@ function renderTx(){
     </tr>`;
   });
   body.innerHTML=html;
-  // Summary cards — full period, filtered by empresa
-  const allP=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co));
+  // Summary cards — only paid, filtered by empresa
+  const allP=txs.filter(t=>inPeriod(t)&&(co==='all'||t.co===co)&&t.status==='paid');
   const receber=allP.filter(t=>t.type==='receber');
   const pagar=allP.filter(t=>t.type==='pagar');
   const totalRec=receber.reduce((a,t)=>a+t.val,0);
