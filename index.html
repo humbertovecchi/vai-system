@@ -454,6 +454,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     <div class="sw">
       <button class="sw-b a" onclick="setCo('nf',this)"><span class="sw-d" style="background:#C4807F"></span>NatureFace</button>
       <button class="sw-b" onclick="setCo('rv',this)"><span class="sw-d" style="background:#955251"></span>Rosana Academy</button>
+      <button class="sw-b" onclick="setCo('ct',this)"><span class="sw-d" style="background:#7B9E87"></span>Consultório</button>
       <button class="sw-b" onclick="setCo('all',this)"><span class="sw-d" style="background:rgba(255,255,255,.5)"></span>Consolidado</button>
     </div>
   </div>
@@ -482,6 +483,19 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     <div class="ni" id="navAlunos" onclick="sv('alunos',this)">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="7" r="3"/><path d="M2 17c0-3.3 2.7-6 6-6"/><path d="M13 14h5m-2.5-2.5v5"/></svg>Base de Alunos
       <span class="ni-badge" id="nbAlunos">4</span>
+    </div>
+    <div class="nsec" id="navSecConsultorio" style="display:none">Consultório</div>
+    <div class="ni" id="navPacientes" style="display:none" onclick="sv('pacientes',this)">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="7" r="3.5"/><path d="M3 18c0-3.9 3.1-7 7-7s7 3.1 7 7"/><path d="M14 4h3m-1.5-1.5v3"/></svg>Pacientes
+      <span class="ni-badge" id="nbPacientes">0</span>
+    </div>
+    <div class="ni" id="navProced" style="display:none" onclick="sv('procedimentos',this)">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 3h6v3H7zM5 6h10l1 12H4L5 6z"/><path d="M9 9v5M11 9v5"/></svg>Procedimentos
+      <span class="ni-badge" id="nbProced">0</span>
+    </div>
+    <div class="ni" id="navCEImport" style="display:none" onclick="sv('ceimport',this)">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 3"/><path d="M6 10H3M17 10h-3"/></svg>Clínica Experts
+      <span class="ni-badge" id="nbCEPend" style="display:none">0</span>
     </div>
     <div class="nsec">Agenda</div>
     <div class="ni" onclick="sv('calendario',this)">
@@ -631,6 +645,52 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     </div>
   </div>
 
+  <!-- PACIENTES -->
+  <div class="page" id="page-pacientes">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+      <input class="srch" id="pacienteSrch" placeholder="Buscar por nome, código ou CPF..." oninput="renderPacientes()">
+      <select class="fsel" id="pacienteFiltSt" onchange="renderPacientes()"><option value="">Todos os status</option><option value="ativo">Ativos</option><option value="inativo">Inativos</option></select>
+      <div style="margin-left:auto"><button class="bp" onclick="openAddPaciente()">+ Novo Paciente</button></div>
+    </div>
+    <div class="atbl">
+      <div class="athdr"><div class="th">Código</div><div class="th">Nome</div><div class="th">CPF</div><div class="th">Telefone</div><div class="th">Nascimento</div><div class="th">Status</div><div class="th">Ações</div></div>
+      <div id="pacienteBody"></div>
+    </div>
+  </div>
+
+  <!-- PROCEDIMENTOS -->
+  <div class="page" id="page-procedimentos">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+      <input class="srch" id="procedSrch" placeholder="Buscar por nome ou categoria..." oninput="renderProcedimentos()">
+      <select class="fsel" id="procedFiltSt" onchange="renderProcedimentos()"><option value="">Todos os status</option><option value="ativo">Ativos</option><option value="inativo">Inativos</option></select>
+      <div style="margin-left:auto"><button class="bp" onclick="openAddProcedimento()">+ Novo Procedimento</button></div>
+    </div>
+    <div class="atbl">
+      <div class="athdr"><div class="th">Código</div><div class="th">Nome</div><div class="th">Categoria</div><div class="th">Valor</div><div class="th">Duração</div><div class="th">Status</div><div class="th">Ações</div></div>
+      <div id="procedBody"></div>
+    </div>
+  </div>
+
+  <!-- CLINICA EXPERTS IMPORT -->
+  <div class="page" id="page-ceimport">
+    <div class="cc" style="margin-bottom:20px">
+      <div class="ch"><div><div class="ct">🔗 Integração Clínica Experts</div><div class="cs">Webhook para importação automática de pagamentos e agendamentos</div></div></div>
+      <div style="padding:18px 20px">
+        <div style="font-size:13px;color:var(--t2);margin-bottom:10px">Configure esta URL como webhook no Clínica Experts (Configurações → Integrações → Webhook):</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <code id="ceWebhookUrl" style="flex:1;background:var(--bg);border:1.5px solid var(--bdr);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--t1);word-break:break-all">https://cfbnqvznkmpihojwkgek.supabase.co/functions/v1/ce-webhook</code>
+          <button class="bs" onclick="navigator.clipboard.writeText('https://cfbnqvznkmpihojwkgek.supabase.co/functions/v1/ce-webhook').then(()=>{this.textContent='✓ Copiado!';setTimeout(()=>this.textContent='📋 Copiar',2000)})">📋 Copiar</button>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div class="ct" style="font-size:16px;font-weight:700">Eventos Pendentes</div>
+      <span id="cePendCount" style="font-size:12px;color:var(--t3)">carregando...</span>
+      <div style="margin-left:auto"><button class="bp" onclick="loadCEEvents()">🔄 Atualizar</button></div>
+    </div>
+    <div id="ceEventsList"></div>
+  </div>
+
   <!-- CALENDARIO -->
   <div class="page" id="page-calendario">
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
@@ -684,6 +744,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
         <option value="">Todas as empresas</option>
         <option value="nf">NatureFace</option>
         <option value="rv">Rosana Academy</option>
+        <option value="ct">Consultório</option>
       </select>
     </div>
     <!-- KPIs -->
@@ -758,6 +819,45 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
   </div>
 </div>
 
+<!-- MODAL PACIENTE -->
+<div class="ov" id="pacienteModal">
+  <div class="mo w">
+    <button class="mcl" onclick="closeM('pacienteModal')">×</button>
+    <div class="mttl" id="pacMT">Novo Paciente</div>
+    <div class="msub">Consultório — cadastro de paciente</div>
+    <div class="fg">
+      <div class="fgp"><label class="fl">Código</label><input class="fi" id="pacCode" placeholder="Ex: CTp001"></div>
+      <div class="fgp"><label class="fl">Status</label><select class="fse" id="pacSt"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></div>
+      <div class="fgp fc1"><label class="fl">Nome completo</label><input class="fi" id="pacNm" placeholder="Nome completo do paciente"></div>
+      <div class="fgp"><label class="fl">CPF</label><input class="fi" id="pacCpf" placeholder="000.000.000-00"></div>
+      <div class="fgp"><label class="fl">Data de Nascimento</label><input class="fi" id="pacBirth" type="date"></div>
+      <div class="fgp"><label class="fl">E-mail</label><input class="fi" id="pacEm" type="email" placeholder="email@exemplo.com"></div>
+      <div class="fgp"><label class="fl">Telefone / WhatsApp</label><input class="fi" id="pacPh" placeholder="(00) 00000-0000"></div>
+      <div class="fgp fc1"><label class="fl">Observações / Anamnese</label><textarea class="fta" id="pacNo" placeholder="Observações, histórico, alergias..."></textarea></div>
+    </div>
+    <div class="mft"><button class="bs" onclick="closeM('pacienteModal')">Cancelar</button><button class="bp" onclick="savePaciente()">Salvar Paciente</button></div>
+  </div>
+</div>
+
+<!-- MODAL PROCEDIMENTO -->
+<div class="ov" id="procedimentoModal">
+  <div class="mo">
+    <button class="mcl" onclick="closeM('procedimentoModal')">×</button>
+    <div class="mttl" id="procMT">Novo Procedimento</div>
+    <div class="msub">Consultório — cadastro de procedimento</div>
+    <div class="fg">
+      <div class="fgp"><label class="fl">Código</label><input class="fi" id="procCode" placeholder="Ex: PRO001"></div>
+      <div class="fgp"><label class="fl">Status</label><select class="fse" id="procStat"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></div>
+      <div class="fgp fc1"><label class="fl">Nome do Procedimento</label><input class="fi" id="procNm" placeholder="Ex: Limpeza de Pele Profunda"></div>
+      <div class="fgp"><label class="fl">Categoria</label><select class="fse" id="procCat"><option>Estética Facial</option><option>Estética Corporal</option><option>Injetáveis</option><option>Laser e Alta Tecnologia</option><option>Cirúrgico</option><option>Consulta</option><option>Outro</option></select></div>
+      <div class="fgp"><label class="fl">Valor (R$)</label><input class="fi" id="procVal" type="number" placeholder="0,00" min="0" step="0.01"></div>
+      <div class="fgp"><label class="fl">Duração (min)</label><input class="fi" id="procDur" type="number" placeholder="60" min="5"></div>
+      <div class="fgp fc1"><label class="fl">Descrição</label><textarea class="fta" id="procDs" placeholder="Descreva o procedimento..."></textarea></div>
+    </div>
+    <div class="mft"><button class="bs" onclick="closeM('procedimentoModal')">Cancelar</button><button class="bp" onclick="saveProcedimento()">Salvar Procedimento</button></div>
+  </div>
+</div>
+
 <!-- MODAL FINANCEIRO -->
 <div class="ov" id="txModal">
   <div class="mo w">
@@ -767,10 +867,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     <div class="fg">
       <div class="fgp fc1"><label class="fl">Descrição</label><input class="fi" id="fNm" placeholder="Ex: Aluguel — Clínica Faria Lima"></div>
       <div class="fgp"><label class="fl">Tipo</label><select class="fse" id="fTy" onchange="checkStu();toggleRec();toggleVendField()"><option value="pagar">A Pagar</option><option value="receber">A Receber</option></select></div>
-      <div class="fgp"><label class="fl">Empresa</label><select class="fse" id="fCo" onchange="checkStu();toggleCursoField();toggleVendField()"><option value="nf">NatureFace</option><option value="rv">Rosana Academy</option></select></div>
+      <div class="fgp"><label class="fl">Empresa</label><select class="fse" id="fCo" onchange="checkStu();toggleCursoField();toggleVendField();toggleProcField()"><option value="nf">NatureFace</option><option value="rv">Rosana Academy</option><option value="ct">Consultório</option></select></div>
       <div class="fgp" id="fVendWrap" style="display:none"><label class="fl">Vendedora</label><select class="fse" id="fVend"><option value="">— Nenhuma —</option></select></div>
       <div class="fgp" id="fFpgWrap" style="display:none"><label class="fl">Forma de Pagamento</label><select class="fse" id="fFpg"><option value="">— Selecione —</option><option value="pix">PIX</option><option value="debito">Débito</option><option value="credito">Crédito</option><option value="boleto">Boleto</option><option value="transferencia">Transferência</option><option value="dinheiro">Dinheiro</option></select></div>
       <div class="fgp" id="cursoFieldWrap"><label class="fl">Curso (opcional)</label><select class="fse" id="fCrs"><option value="">— Nenhum —</option></select></div>
+      <div class="fgp" id="fProcWrap" style="display:none"><label class="fl">Procedimento (opcional)</label><select class="fse" id="fProc"><option value="">— Nenhum —</option></select></div>
       <div class="fgp"><label class="fl">Status</label><select class="fse" id="fSt"><option value="paid">Pago</option><option value="pend">Pendente</option><option value="due">Vence Hoje</option><option value="sched">Agendado</option></select></div>
       <div class="fgp"><label class="fl">Vencimento</label><input class="fi" id="fDu" type="date"></div>
       <div class="fgp"><label class="fl">Valor (R$)</label><input class="fi" id="fVl" type="number" placeholder="0,00" min="0" step="0.01"></div>
@@ -908,7 +1009,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
       <div class="fgp"><label class="fl">Data</label><input class="fi" id="evDt" type="date"></div>
       <div class="fgp"><label class="fl">Horário</label><input class="fi" id="evHr" type="time" value="09:00"></div>
       <div class="fgp"><label class="fl">Tipo</label><select class="fse" id="evTy"><option value="aula">Aula</option><option value="mentoria">Mentoria</option><option value="reuniao">Reunião</option><option value="pagamento">Pagamento</option><option value="evento">Evento</option><option value="alerta">Alerta</option></select></div>
-      <div class="fgp"><label class="fl">Empresa</label><select class="fse" id="evCo"><option value="nf">NatureFace</option><option value="rv">Rosana Academy</option></select></div>
+      <div class="fgp"><label class="fl">Empresa</label><select class="fse" id="evCo"><option value="nf">NatureFace</option><option value="rv">Rosana Academy</option><option value="ct">Consultório</option></select></div>
       <div class="fgp fc1"><label class="fl">Descrição</label><textarea class="fta" id="evDs" placeholder="Detalhes do evento..."></textarea></div>
     </div>
     <div class="mft"><button class="bs" onclick="closeM('evModal')">Cancelar</button><button class="bs" id="evDelBtn" style="display:none;color:var(--re);border-color:rgba(184,48,48,.3)" onclick="deleteEditingEvent()">🗑 Excluir Evento</button><button class="bp" onclick="saveEvent()">Salvar Evento</button></div>
@@ -923,8 +1024,12 @@ let editStuId=null, stuMode='new', stuNid=5, stuNcode=5;
 let editCursoId=null, cursoNid=4, cursoNcode=4;
 let viewingCursoId=null;
 let calDate=new Date(2025,6,1);
+let editPacienteId=null, patientNid=1, patientNcode=1;
+let editProcedimentoId=null, procedureNid=1, procedureNcode=1;
 
 // ===== DATA =====
+let patients=[];
+let procedures=[];
 let courses=[
   {id:1,code:'RVC001',name:'Protocolos Faciais Avançados',cat:'Estética Clínica',color:'#955251',startDate:'2025-07-01',endDate:'2025-09-30',val:2400,maxStu:20,status:'ativo',desc:'Curso completo de protocolos faciais premium'},
   {id:2,code:'RVC002',name:'Mentoria Executiva Premium',cat:'Gestão e Liderança',color:'#C4807F',startDate:'2025-07-15',endDate:'2025-12-15',val:7500,maxStu:10,status:'ativo',desc:''},
@@ -962,7 +1067,7 @@ let evs={
 };
 
 // ===== COMPANY =====
-const cod={nf:{fat:'R$ 148.200',luc:'R$ 58.100',rec:'R$ 32.400',inad:'1,8%',tick:'R$ 960',cli:'24',roi:'280%',grow:'+16%',name:'NatureFace'},rv:{fat:'R$ 136.550',luc:'R$ 54.240',rec:'R$ 34.800',inad:'3,1%',tick:'R$ 2.840',cli:'23',roi:'410%',grow:'+22%',name:'Rosana Academy'},all:{fat:'R$ 284.750',luc:'R$ 112.340',rec:'R$ 67.200',inad:'2,4%',tick:'R$ 1.840',cli:'47',roi:'340%',grow:'+18%',name:'Consolidado'}};
+const cod={nf:{fat:'R$ 148.200',luc:'R$ 58.100',rec:'R$ 32.400',inad:'1,8%',tick:'R$ 960',cli:'24',roi:'280%',grow:'+16%',name:'NatureFace'},rv:{fat:'R$ 136.550',luc:'R$ 54.240',rec:'R$ 34.800',inad:'3,1%',tick:'R$ 2.840',cli:'23',roi:'410%',grow:'+22%',name:'Rosana Academy'},ct:{fat:'R$ 0',luc:'R$ 0',rec:'R$ 0',inad:'0%',tick:'R$ 0',cli:'0',roi:'0%',grow:'+0%',name:'Consultório'},all:{fat:'R$ 284.750',luc:'R$ 112.340',rec:'R$ 67.200',inad:'2,4%',tick:'R$ 1.840',cli:'47',roi:'340%',grow:'+18%',name:'Consolidado'}};
 function setCo(c,btn){
   co=c;
   document.querySelectorAll('.sw-b').forEach(b=>b.classList.remove('a'));
@@ -972,22 +1077,22 @@ function setCo(c,btn){
   s('kF',d.fat);s('kL',d.luc);s('kR',d.rec);s('kI',d.inad);s('kT',d.tick);s('kC',d.cli);s('kRo',d.roi);s('kG',d.grow);
   document.getElementById('tbS').textContent=document.getElementById('tbS').textContent.replace(/·.*$/,'· '+d.name);
   if(charts.rev){charts.rev.data.datasets[0].hidden=c==='rv';charts.rev.data.datasets[1].hidden=c==='nf';charts.rev.update();}
-  // Show Academy-specific nav only when rv is selected
+  // Nav visibility per empresa
   const isRV=c==='rv';
-  const disp=isRV?'':'none';
-  ['navSecAcademy','navCursos','navAlunos'].forEach(id=>{
-    const el=document.getElementById(id);if(el)el.style.display=isRV?'':'none';
-  });
+  const isCT=c==='ct';
   const isNF=c==='nf';
+  ['navSecAcademy','navCursos','navAlunos'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=isRV?'':'none';});
   const nfSecEl=document.getElementById('navSecNF');if(nfSecEl)nfSecEl.style.display=isNF?'':'none';
   const nvEl=document.getElementById('navVendedoras');if(nvEl)nvEl.style.display='';
+  ['navSecConsultorio','navPacientes','navProced','navCEImport'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=isCT?'':'none';});
   const curPage=document.querySelector('.page.a');
   if(!isRV&&curPage&&(curPage.id==='page-cursos'||curPage.id==='page-alunos'))sv('dashboard',document.querySelector('.ni'));
+  if(!isCT&&curPage&&(curPage.id==='page-pacientes'||curPage.id==='page-procedimentos'||curPage.id==='page-ceimport'))sv('dashboard',document.querySelector('.ni'));
   renderTx();
 }
 
 // ===== NAV =====
-const pgMap={dashboard:['Dashboard Executivo','Visão geral estratégica'],financeiro:['Gestão Financeira','Lançamentos · Contas · Fluxo de Caixa'],carteira:['Carteira','Faturamento · Recebimentos · Agenda de entradas'],cursos:['Cursos — Rosana Academy','Controle financeiro por curso'],alunos:['Base de Alunos','Rosana Vecchi Academy'],vendedoras:['Vendedoras','Equipe de vendas — NatureFace & Academy'],calendario:['Calendário','Agenda e eventos'],vai:['V.A.I — Assistente','Inteligência artificial executiva']};
+const pgMap={dashboard:['Dashboard Executivo','Visão geral estratégica'],financeiro:['Gestão Financeira','Lançamentos · Contas · Fluxo de Caixa'],carteira:['Carteira','Faturamento · Recebimentos · Agenda de entradas'],cursos:['Cursos — Rosana Academy','Controle financeiro por curso'],alunos:['Base de Alunos','Rosana Vecchi Academy'],vendedoras:['Vendedoras','Equipe de vendas — NatureFace & Academy'],pacientes:['Pacientes — Consultório','Base de pacientes'],procedimentos:['Procedimentos — Consultório','Serviços e tratamentos'],ceimport:['Clínica Experts','Integração e importação automática'],calendario:['Calendário','Agenda e eventos'],vai:['V.A.I — Assistente','Inteligência artificial executiva']};
 function sv(v,el){
   if(el){document.querySelectorAll('.ni').forEach(n=>n.classList.remove('a'));el.classList.add('a');}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('a'));
@@ -999,6 +1104,9 @@ function sv(v,el){
   if(v==='alunos')renderAlunos();
   if(v==='calendario')renderCal();
   if(v==='vendedoras')renderVendedoras();
+  if(v==='pacientes')renderPacientes();
+  if(v==='procedimentos')renderProcedimentos();
+  if(v==='ceimport')loadCEEvents();
 }
 
 // ===== CHARTS =====
@@ -1017,7 +1125,7 @@ function initCharts(){
   if(rdc)charts.rd=new Chart(rdc.getContext('2d'),{type:'bar',data:{labels:[],datasets:[{label:'Receita',data:[],backgroundColor:'rgba(196,165,90,.75)',borderRadius:5,borderSkipped:false},{label:'Despesa',data:[],backgroundColor:'rgba(149,82,81,.6)',borderRadius:5,borderSkipped:false}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{padding:10,usePointStyle:true,pointStyle:'circle',font:{size:11}}},tooltip:_tip({label:function(c){return' R$ '+c.raw.toLocaleString('pt-BR');}})},scales:{x:{grid:{display:false},border:{color:'transparent'}},y:{grid:{color:'rgba(0,0,0,.05)'},border:{color:'transparent'},ticks:{callback:function(v){return'R$'+(v/1000).toFixed(0)+'k';}}}}}});
   // Distribuição por Empresa
   var ec=document.getElementById('empresaChart');
-  if(ec)charts.empresa=new Chart(ec.getContext('2d'),{type:'doughnut',data:{labels:['NatureFace','Rosana Academy'],datasets:[{data:[50,50],backgroundColor:['#C4807F','#955251'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:11,usePointStyle:true,pointStyle:'circle',font:{size:12}}},tooltip:_tip({label:function(c){return' '+c.label+': '+c.raw+'%';}})}}});
+  if(ec)charts.empresa=new Chart(ec.getContext('2d'),{type:'doughnut',data:{labels:['NatureFace','Rosana Academy','Consultório'],datasets:[{data:[34,33,33],backgroundColor:['#C4807F','#955251','#7B9E87'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:11,usePointStyle:true,pointStyle:'circle',font:{size:12}}},tooltip:_tip({label:function(c){return' '+c.label+': '+c.raw+'%';}})}}});
   updateDashCharts();
 }
 function updateDashCharts(){
@@ -1048,8 +1156,9 @@ function updateDashCharts(){
   if(charts.empresa){
     const nfTot=txs.filter(t=>t.co==='nf'&&t.type==='receber').reduce((s,t)=>s+t.val,0);
     const rvTot=txs.filter(t=>t.co==='rv'&&t.type==='receber').reduce((s,t)=>s+t.val,0);
-    const total=nfTot+rvTot||1;
-    charts.empresa.data.datasets[0].data=[Math.round(nfTot/total*100),Math.round(rvTot/total*100)];
+    const ctTot=txs.filter(t=>t.co==='ct'&&t.type==='receber').reduce((s,t)=>s+t.val,0);
+    const total=nfTot+rvTot+ctTot||1;
+    charts.empresa.data.datasets[0].data=[Math.round(nfTot/total*100),Math.round(rvTot/total*100),Math.round(ctTot/total*100)];
     charts.empresa.update();
   }
 }
@@ -1304,11 +1413,24 @@ function swSubTab(el,t){
 
 // Student section toggle
 function toggleCursoField(){
-  const isRV=document.getElementById('fCo')?.value==='rv';
+  const coVal=document.getElementById('fCo')?.value;
+  const isRV=coVal==='rv';
   const wrap=document.getElementById('cursoFieldWrap');
   if(wrap){wrap.style.display=isRV?'':'none';if(!isRV){const s=document.getElementById('fCrs');if(s)s.value='';}}
   const vr=document.getElementById('fVlRestWrap');
   if(vr)vr.style.display=isRV?'':'none';
+}
+function toggleProcField(){
+  const coVal=document.getElementById('fCo')?.value;
+  const isCT=coVal==='ct';
+  const pw=document.getElementById('fProcWrap');
+  if(pw){
+    pw.style.display=isCT?'':'none';
+    if(isCT){
+      const sel=document.getElementById('fProc');
+      if(sel){sel.innerHTML='<option value="">— Nenhum —</option>'+procedures.filter(function(p){return p.status==='ativo';}).map(function(p){return'<option value="'+p.id+'">'+p.code+' — '+p.name+'</option>';}).join('');}
+    }
+  }
 }
 function toggleVendField(){
   const isRec=document.getElementById('fTy')?.value==='receber';
@@ -1413,7 +1535,7 @@ function openAddTx(){
   editTxId=null;document.getElementById('txMT').textContent='Novo Lançamento';
   ['fNm','fNo'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fTy').value='pagar';
-  document.getElementById('fCo').value=(co==='all'||co==='nf')?'nf':'rv';document.getElementById('fSt').value='sched';
+  document.getElementById('fCo').value=(co==='ct')?'ct':(co==='rv')?'rv':'nf';document.getElementById('fSt').value='sched';
   document.getElementById('fDu').value='';document.getElementById('fVl').value='';const fr=document.getElementById('fVlRest');if(fr)fr.value='';
   const rec=document.getElementById('fRec');if(rec)rec.value='';
   const rqw=document.getElementById('fRecQtdWrap');if(rqw)rqw.style.display='none';
@@ -1421,7 +1543,7 @@ function openAddTx(){
   const pcw=document.getElementById('fParcCustomWrap');if(pcw)pcw.style.display='none';
   const pp=document.getElementById('fParcPreview');if(pp){pp.style.display='none';pp.innerHTML='';}
   const fpgRst=document.getElementById('fFpg');if(fpgRst)fpgRst.value='';
-  populateCursoSelects();toggleCursoField();toggleRec();toggleVendField();checkStu();tgStu('new');
+  populateCursoSelects();toggleCursoField();toggleRec();toggleVendField();toggleProcField();checkStu();tgStu('new');
   ['sNm','sEm','sPh','sCp','sSt','sBa','sCe','sCi'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const sc=document.getElementById('sCode');if(sc)sc.value=genStuCode();
   const ss=document.getElementById('sSe');if(ss)ss.value='SP';
@@ -1440,6 +1562,7 @@ function editTx(id){
   const pwE=document.getElementById('fParcWrap');if(pwE)pwE.style.display='none';
   const ppE=document.getElementById('fParcPreview');if(ppE){ppE.style.display='none';ppE.innerHTML='';}
   populateCursoSelects();toggleCursoField();document.getElementById('fCrs').value=t.courseId||'';
+  toggleProcField();setTimeout(()=>{const sp=document.getElementById('fProc');if(sp&&t.procedureId)sp.value=t.procedureId;},30);
   toggleVendField();setTimeout(()=>{const sv=document.getElementById('fVend');if(sv&&t.vendId)sv.value=t.vendId;const sf=document.getElementById('fFpg');if(sf&&t.fpg)sf.value=t.fpg;},30);
   checkStu();const linked=students.find(s=>s.txId===id);
   if(linked){tgStu('exist');setTimeout(()=>{const sel=document.getElementById('sExSel');if(sel){sel.value=linked.id;previewExistStu();}},60);}else tgStu('new');
@@ -1450,7 +1573,8 @@ function saveTx(){
   const existCat=editTxId?(txs.find(x=>x.id===editTxId)?.cat||''):'';
   const vendIdRaw=document.getElementById('fVend')?.value;
   const fpgVal=document.getElementById('fFpg')?.value||'';
-  const tx={id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,vendId:vendIdRaw?parseInt(vendIdRaw):null,fpg:fpgVal,status:document.getElementById('fSt').value,due:document.getElementById('fDu').value||new Date().toISOString().slice(0,10),val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
+  const procIdRaw=document.getElementById('fProc')?.value;
+  const tx={id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,procedureId:procIdRaw?parseInt(procIdRaw):null,vendId:vendIdRaw?parseInt(vendIdRaw):null,fpg:fpgVal,status:document.getElementById('fSt').value,due:document.getElementById('fDu').value||new Date().toISOString().slice(0,10),val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
   // Parcelamento (só para novos lançamentos)
   if(!editTxId){
     const rawPN=document.getElementById('fParcN')?.value;
@@ -1782,7 +1906,8 @@ function renderCarteira(){
     if(charts.cartDn){charts.cartDn.destroy();}
     var nfT=allRec.filter(function(t){return t.co==='nf'&&t.due&&t.due>=todayStr&&t.due<=prox3Str;}).reduce(function(s,t){return s+t.val;},0);
     var rvT=allRec.filter(function(t){return t.co==='rv'&&t.due&&t.due>=todayStr&&t.due<=prox3Str;}).reduce(function(s,t){return s+t.val;},0);
-    charts.cartDn=new Chart(dnEl.getContext('2d'),{type:'doughnut',data:{labels:['NatureFace','Rosana Academy'],datasets:[{data:[nfT||0,rvT||0],backgroundColor:['#C4807F','#955251'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:10,usePointStyle:true,pointStyle:'circle',font:{size:11}}},tooltip:_tip({label:function(c){return' '+c.label+': R$'+c.raw.toLocaleString('pt-BR');}})}}});
+    var ctT=allRec.filter(function(t){return t.co==='ct'&&t.due&&t.due>=todayStr&&t.due<=prox3Str;}).reduce(function(s,t){return s+t.val;},0);
+    charts.cartDn=new Chart(dnEl.getContext('2d'),{type:'doughnut',data:{labels:['NatureFace','Rosana Academy','Consultório'],datasets:[{data:[nfT||0,rvT||0,ctT||0],backgroundColor:['#C4807F','#955251','#7B9E87'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:10,usePointStyle:true,pointStyle:'circle',font:{size:11}}},tooltip:_tip({label:function(c){return' '+c.label+': R$'+c.raw.toLocaleString('pt-BR');}})}}});
   }
   // ===== AGENDA =====
   var pending=allRec.filter(function(t){return t.status!=='paid';}).sort(function(a,b){return(a.due||'').localeCompare(b.due||'');});
@@ -2017,8 +2142,8 @@ async function doSignOut(){
 // ===== SALVAR =====
 async function saveData(){
   const payload={
-    txs,courses,students,vendedoras,evs,
-    ids:{txNid,cursoNid,cursoNcode,stuNid,stuNcode,vendNid,vendNcode,evNextId,grupoNid}
+    txs,courses,students,vendedoras,evs,patients,procedures,
+    ids:{txNid,cursoNid,cursoNcode,stuNid,stuNcode,vendNid,vendNcode,evNextId,grupoNid,patientNid,patientNcode,procedureNid,procedureNcode}
   };
   // Sempre salva no localStorage como backup
   try{localStorage.setItem('vai_backup',JSON.stringify(payload));}catch(e){}
@@ -2058,6 +2183,8 @@ function applyData(d){
   if(d.students&&d.students.length)students=d.students;
   if(d.vendedoras&&d.vendedoras.length)vendedoras=d.vendedoras;
   if(d.evs&&Object.keys(d.evs).length)evs=d.evs;
+  if(d.patients)patients=d.patients;
+  if(d.procedures)procedures=d.procedures;
   if(d.ids){
     const ids=d.ids;
     if(ids.txNid)txNid=ids.txNid;if(ids.cursoNid)cursoNid=ids.cursoNid;
@@ -2065,6 +2192,8 @@ function applyData(d){
     if(ids.stuNcode)stuNcode=ids.stuNcode;if(ids.vendNid)vendNid=ids.vendNid;
     if(ids.vendNcode)vendNcode=ids.vendNcode;if(ids.evNextId)evNextId=ids.evNextId;
     if(ids.grupoNid)grupoNid=ids.grupoNid;
+    if(ids.patientNid)patientNid=ids.patientNid;if(ids.patientNcode)patientNcode=ids.patientNcode;
+    if(ids.procedureNid)procedureNid=ids.procedureNid;if(ids.procedureNcode)procedureNcode=ids.procedureNcode;
   }
   // Re-renderizar a página atual após carregar dados
   refreshCurrentPage();
@@ -2080,6 +2209,8 @@ function refreshCurrentPage(){
   else if(id==='page-cursos')renderCursos();
   else if(id==='page-alunos')renderAlunos();
   else if(id==='page-vendedoras'){renderVendedoras();if(document.getElementById('vendSecDesemp')?.style.display!=='none')renderVendDesemp();}
+  else if(id==='page-pacientes')renderPacientes();
+  else if(id==='page-procedimentos')renderProcedimentos();
   else if(id==='page-calendario')renderCal();
 }
 
@@ -2109,6 +2240,149 @@ function showSyncToast(){
   setTimeout(()=>{if(toast)toast.style.display='none';},3000);
 }
 
+// ===== PACIENTES =====
+function genPacCode(){return 'CTP'+String(patientNcode).padStart(3,'0');}
+function renderPacientes(){
+  const srch=(document.getElementById('pacienteSrch')?.value||'').toLowerCase();
+  const stFilt=document.getElementById('pacienteFiltSt')?.value||'';
+  let list=patients.filter(function(p){
+    if(stFilt&&p.status!==stFilt)return false;
+    return !srch||(p.name||'').toLowerCase().includes(srch)||(p.code||'').toLowerCase().includes(srch)||(p.cpf||'').includes(srch);
+  });
+  const bd=document.getElementById('pacienteBody');
+  if(!bd)return;
+  const nb=document.getElementById('nbPacientes');if(nb)nb.textContent=patients.length;
+  if(!list.length){bd.innerHTML='<div class="atr"><div class="td" style="grid-column:1/-1;color:var(--t3);text-align:center;padding:24px">Nenhum paciente encontrado.</div></div>';return;}
+  bd.innerHTML=list.map(function(p){
+    const sts=p.status==='ativo'?'<span style="color:var(--gr);font-size:11px;font-weight:600">● Ativo</span>':'<span style="color:var(--t3);font-size:11px">● Inativo</span>';
+    const birth=p.birth?new Date(p.birth+'T00:00:00').toLocaleDateString('pt-BR'):'—';
+    return '<div class="atr"><div class="td">'+p.code+'</div><div class="td" style="font-weight:600">'+p.name+'</div><div class="td">'+( p.cpf||'—')+'</div><div class="td">'+( p.phone||'—')+'</div><div class="td">'+birth+'</div><div class="td">'+sts+'</div><div class="td"><button class="ba" onclick="editPaciente('+p.id+')">✎</button><button class="ba" onclick="delPaciente('+p.id+')" style="color:var(--m)">✕</button></div></div>';
+  }).join('');
+}
+function openAddPaciente(){
+  editPacienteId=null;document.getElementById('pacMT').textContent='Novo Paciente';
+  ['pacNm','pacEm','pacPh','pacCpf','pacNo'].forEach(function(id){const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('pacCode').value=genPacCode();document.getElementById('pacSt').value='ativo';
+  const pb=document.getElementById('pacBirth');if(pb)pb.value='';
+  document.getElementById('pacienteModal').classList.add('o');
+}
+function editPaciente(id){
+  const p=patients.find(function(x){return x.id===id;});if(!p)return;
+  editPacienteId=id;document.getElementById('pacMT').textContent='Editar Paciente';
+  document.getElementById('pacCode').value=p.code;document.getElementById('pacSt').value=p.status;
+  document.getElementById('pacNm').value=p.name;document.getElementById('pacCpf').value=p.cpf||'';
+  document.getElementById('pacEm').value=p.email||'';document.getElementById('pacPh').value=p.phone||'';
+  document.getElementById('pacNo').value=p.notes||'';
+  const pb=document.getElementById('pacBirth');if(pb)pb.value=p.birth||'';
+  document.getElementById('pacienteModal').classList.add('o');
+}
+function savePaciente(){
+  const name=document.getElementById('pacNm').value.trim();if(!name){document.getElementById('pacNm').focus();return;}
+  const code=document.getElementById('pacCode').value.trim().toUpperCase()||genPacCode();
+  if(!editPacienteId)patientNcode++;
+  const p={id:editPacienteId||patientNid++,code,name,status:document.getElementById('pacSt').value,cpf:document.getElementById('pacCpf').value||'',email:document.getElementById('pacEm').value||'',phone:document.getElementById('pacPh').value||'',birth:document.getElementById('pacBirth')?.value||'',notes:document.getElementById('pacNo').value||''};
+  if(editPacienteId){const i=patients.findIndex(function(x){return x.id===editPacienteId;});if(i>=0)patients[i]=p;}else patients.push(p);
+  closeM('pacienteModal');renderPacientes();saveData();
+}
+function delPaciente(id){if(!confirm('Excluir este paciente?'))return;patients=patients.filter(function(p){return p.id!==id;});renderPacientes();saveData();}
+
+// ===== PROCEDIMENTOS =====
+function genProcCode(){return 'PRO'+String(procedureNcode).padStart(3,'0');}
+function renderProcedimentos(){
+  const srch=(document.getElementById('procedSrch')?.value||'').toLowerCase();
+  const stFilt=document.getElementById('procedFiltSt')?.value||'';
+  let list=procedures.filter(function(p){
+    if(stFilt&&p.status!==stFilt)return false;
+    return !srch||(p.name||'').toLowerCase().includes(srch)||(p.cat||'').toLowerCase().includes(srch)||(p.code||'').toLowerCase().includes(srch);
+  });
+  const bd=document.getElementById('procedBody');
+  if(!bd)return;
+  const nb=document.getElementById('nbProced');if(nb)nb.textContent=procedures.length;
+  if(!list.length){bd.innerHTML='<div class="atr"><div class="td" style="grid-column:1/-1;color:var(--t3);text-align:center;padding:24px">Nenhum procedimento encontrado.</div></div>';return;}
+  const fmt=function(v){return'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2});};
+  bd.innerHTML=list.map(function(p){
+    const sts=p.status==='ativo'?'<span style="color:var(--gr);font-size:11px;font-weight:600">● Ativo</span>':'<span style="color:var(--t3);font-size:11px">● Inativo</span>';
+    return '<div class="atr"><div class="td">'+p.code+'</div><div class="td" style="font-weight:600">'+p.name+'</div><div class="td">'+p.cat+'</div><div class="td">'+fmt(p.val||0)+'</div><div class="td">'+(p.dur?p.dur+' min':'—')+'</div><div class="td">'+sts+'</div><div class="td"><button class="ba" onclick="editProcedimento('+p.id+')">✎</button><button class="ba" onclick="delProcedimento('+p.id+')" style="color:var(--m)">✕</button></div></div>';
+  }).join('');
+}
+function openAddProcedimento(){
+  editProcedimentoId=null;document.getElementById('procMT').textContent='Novo Procedimento';
+  ['procNm','procDs'].forEach(function(id){const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('procCode').value=genProcCode();document.getElementById('procStat').value='ativo';
+  document.getElementById('procVal').value='';document.getElementById('procDur').value='';
+  document.getElementById('procedimentoModal').classList.add('o');
+}
+function editProcedimento(id){
+  const p=procedures.find(function(x){return x.id===id;});if(!p)return;
+  editProcedimentoId=id;document.getElementById('procMT').textContent='Editar Procedimento';
+  document.getElementById('procCode').value=p.code;document.getElementById('procStat').value=p.status;
+  document.getElementById('procNm').value=p.name;document.getElementById('procCat').value=p.cat;
+  document.getElementById('procVal').value=p.val||'';document.getElementById('procDur').value=p.dur||'';
+  document.getElementById('procDs').value=p.desc||'';
+  document.getElementById('procedimentoModal').classList.add('o');
+}
+function saveProcedimento(){
+  const name=document.getElementById('procNm').value.trim();if(!name){document.getElementById('procNm').focus();return;}
+  const code=document.getElementById('procCode').value.trim().toUpperCase()||genProcCode();
+  if(!editProcedimentoId)procedureNcode++;
+  const p={id:editProcedimentoId||procedureNid++,code,name,status:document.getElementById('procStat').value,cat:document.getElementById('procCat').value,val:parseFloat(document.getElementById('procVal').value)||0,dur:parseInt(document.getElementById('procDur').value)||null,desc:document.getElementById('procDs').value||''};
+  if(editProcedimentoId){const i=procedures.findIndex(function(x){return x.id===editProcedimentoId;});if(i>=0)procedures[i]=p;}else procedures.push(p);
+  closeM('procedimentoModal');renderProcedimentos();saveData();
+}
+function delProcedimento(id){if(!confirm('Excluir este procedimento?'))return;procedures=procedures.filter(function(p){return p.id!==id;});renderProcedimentos();saveData();}
+
+// ===== CLÍNICA EXPERTS INTEGRATION =====
+async function loadCEEvents(){
+  const el=document.getElementById('ceEventsList');
+  const cnt=document.getElementById('cePendCount');
+  if(el)el.innerHTML='<div style="color:var(--t3);padding:20px;text-align:center">Carregando eventos...</div>';
+  if(!supabaseReady){
+    if(el)el.innerHTML='<div style="color:var(--t3);padding:20px;text-align:center">Supabase não configurado.</div>';
+    return;
+  }
+  try{
+    const db=sbAdmin||sbClient;
+    const{data,error}=await db.from('ce_events').select('*').eq('imported',false).order('received_at',{ascending:false}).limit(50);
+    if(error){if(error.code==='42P01'){if(el)el.innerHTML='<div class="cc" style="padding:20px;text-align:center;color:var(--t3)">Tabela <code>ce_events</code> não encontrada no Supabase.<br>Crie a tabela conforme o guia de configuração.</div>';return;}throw error;}
+    if(cnt)cnt.textContent=(data?.length||0)+' pendente(s)';
+    const nb=document.getElementById('nbCEPend');
+    if(nb){nb.textContent=data?.length||0;nb.style.display=data?.length?'':'none';}
+    if(!data||!data.length){if(el)el.innerHTML='<div style="color:var(--t3);padding:24px;text-align:center">✅ Nenhum evento pendente de importação.</div>';return;}
+    renderCEImport(data);
+  }catch(e){if(el)el.innerHTML='<div style="color:var(--m);padding:20px">Erro: '+e.message+'</div>';}
+}
+function renderCEImport(events){
+  const el=document.getElementById('ceEventsList');if(!el)return;
+  const fmt=function(v){return'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});};
+  el.innerHTML=events.map(function(ev){
+    const p=ev.payload||{};
+    const dt=new Date(ev.received_at).toLocaleDateString('pt-BR')+' '+new Date(ev.received_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const nome=p.patient_name||p.paciente||p.nome||p.name||'—';
+    const val=p.amount||p.valor||p.value||p.total||0;
+    const tipo=p.type||p.tipo||ev.event_type||'evento';
+    const raw=JSON.stringify(p,null,2);
+    return '<div class="cc" style="margin-bottom:12px"><div style="padding:16px 18px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><div style="font-weight:600;color:var(--t1)">'+tipo+'</div><div style="font-size:11px;color:var(--t3)">'+dt+'</div><div style="margin-left:auto;display:flex;gap:8px"><button class="bp" onclick="importCEEvent(\''+ev.id+'\','+JSON.stringify({nome,val,tipo}).replace(/'/g,"\\'")+')">⬇ Importar</button><button class="ba" onclick="discardCEEvent(\''+ev.id+'\')" style="color:var(--m)">✕ Descartar</button></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px;color:var(--t2)"><div><span style="color:var(--t3)">Paciente: </span>'+nome+'</div><div><span style="color:var(--t3)">Valor: </span>'+fmt(val)+'</div><div><span style="color:var(--t3)">ID: </span>'+ev.id.slice(0,8)+'...</div></div><details style="margin-top:10px"><summary style="font-size:11px;color:var(--t3);cursor:pointer">Ver payload completo</summary><pre style="font-size:10px;color:var(--t3);margin-top:6px;overflow:auto;max-height:120px">'+raw+'</pre></details></div></div>';
+  }).join('');
+}
+async function importCEEvent(eventId,meta){
+  const now=new Date().toISOString().slice(0,10);
+  const tx={id:txNid++,name:meta.tipo+' — '+(meta.nome||'Paciente'),type:'receber',cat:'Procedimentos',co:'ct',courseId:null,procedureId:null,vendId:null,fpg:'',status:'paid',due:now,val:parseFloat(meta.val)||0,notes:'Importado do Clínica Experts'};
+  txs.push(tx);
+  try{
+    const db=sbAdmin||sbClient;
+    await db.from('ce_events').update({imported:true,tx_id:tx.id}).eq('id',eventId);
+  }catch(e){console.warn('CE import update error:',e);}
+  saveData();loadCEEvents();renderTx();
+}
+async function discardCEEvent(eventId){
+  if(!confirm('Descartar este evento?'))return;
+  try{
+    const db=sbAdmin||sbClient;
+    await db.from('ce_events').update({imported:true}).eq('id',eventId);
+  }catch(e){console.warn('CE discard error:',e);}
+  loadCEEvents();
+}
+
 window.addEventListener('load',async()=>{
   initMesSelect();
   initSupabase();
@@ -2130,6 +2404,7 @@ window.addEventListener('load',async()=>{
     }
   }
   ['navSecAcademy','navCursos','navAlunos'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  ['navSecConsultorio','navPacientes','navProced','navCEImport'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   ['navSecNF'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='';});
   const nvInit=document.getElementById('navVendedoras');if(nvInit)nvInit.style.display='';
 });
