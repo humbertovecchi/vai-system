@@ -1327,8 +1327,8 @@ function toggleRec(){
   const qw=document.getElementById('fRecQtdWrap');
   if(qw)qw.style.display=(rec&&isPagar&&!isEdit)?'':'none';
   const pw=document.getElementById('fParcWrap');
-  if(pw)pw.style.display=(isPagar&&!isEdit)?'':'none';
-  if(!isPagar||isEdit){const pn=document.getElementById('fParcN');if(pn)pn.value='';const pp=document.getElementById('fParcPreview');if(pp){pp.style.display='none';pp.innerHTML='';}const pcw=document.getElementById('fParcCustomWrap');if(pcw)pcw.style.display='none';const frec=document.getElementById('fRec');if(frec)frec.value='';}
+  if(pw)pw.style.display=(!isEdit)?'':'none';
+  if(isEdit){const pn=document.getElementById('fParcN');if(pn)pn.value='';const pp=document.getElementById('fParcPreview');if(pp){pp.style.display='none';pp.innerHTML='';}const pcw=document.getElementById('fParcCustomWrap');if(pcw)pcw.style.display='none';const frec=document.getElementById('fRec');if(frec)frec.value='';}
   // Recorrência e parcelamento são mutuamente exclusivos
   if(rec&&isPagar){const pn=document.getElementById('fParcN');if(pn)pn.value='';const pp=document.getElementById('fParcPreview');if(pp){pp.style.display='none';pp.innerHTML='';}const pcw=document.getElementById('fParcCustomWrap');if(pcw)pcw.style.display='none';}
 }
