@@ -466,6 +466,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
     <div class="ni" onclick="sv('financeiro',this)">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 10h16M5 6h10M7 14h6"/><rect x="2" y="3" width="16" height="14" rx="2"/></svg>Gestão Financeira
     </div>
+    <div class="ni" onclick="sv('carteira',this)">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="5" width="16" height="12" rx="2"/><path d="M2 8h16"/><circle cx="14.5" cy="13" r="1.5"/></svg>Carteira
+    </div>
     <div class="nsec" id="navSecNF" style="display:none">NatureFace</div>
     <div class="ni" id="navVendedoras" style="display:none" onclick="sv('vendedoras',this)">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="3"/><path d="M1 17c0-3.3 2.7-6 6-6"/><circle cx="14" cy="7" r="3"/><path d="M11 17c0-3.3 1.3-5.4 3-6"/></svg>Vendedoras
@@ -673,6 +676,22 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
       </div>
     </div>
   </div>
+  <!-- CARTEIRA -->
+  <div class="page" id="page-carteira">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+      <select class="fsel" id="carteiraFiltMes" onchange="renderCarteira()" style="min-width:160px"></select>
+      <select class="fsel" id="carteiraFiltCo" onchange="renderCarteira()">
+        <option value="">Todas as empresas</option>
+        <option value="nf">NatureFace</option>
+        <option value="rv">Rosana Academy</option>
+      </select>
+    </div>
+    <!-- KPIs -->
+    <div class="kg" style="margin-bottom:22px" id="carteiraKpis"></div>
+    <!-- Agenda -->
+    <div id="carteiraAgenda"></div>
+  </div>
+
   <!-- VENDEDORAS -->
   <div class="page" id="page-vendedoras">
     <div class="tabs" style="margin-bottom:18px">
@@ -739,6 +758,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
       <div class="fgp"><label class="fl">Tipo</label><select class="fse" id="fTy" onchange="checkStu();toggleRec();toggleVendField()"><option value="pagar">A Pagar</option><option value="receber">A Receber</option></select></div>
       <div class="fgp"><label class="fl">Empresa</label><select class="fse" id="fCo" onchange="checkStu();toggleCursoField();toggleVendField()"><option value="nf">NatureFace</option><option value="rv">Rosana Academy</option></select></div>
       <div class="fgp" id="fVendWrap" style="display:none"><label class="fl">Vendedora</label><select class="fse" id="fVend"><option value="">— Nenhuma —</option></select></div>
+      <div class="fgp" id="fFpgWrap" style="display:none"><label class="fl">Forma de Pagamento</label><select class="fse" id="fFpg"><option value="">— Selecione —</option><option value="pix">PIX</option><option value="debito">Débito</option><option value="credito">Crédito</option><option value="boleto">Boleto</option><option value="transferencia">Transferência</option><option value="dinheiro">Dinheiro</option></select></div>
       <div class="fgp" id="cursoFieldWrap"><label class="fl">Curso (opcional)</label><select class="fse" id="fCrs"><option value="">— Nenhum —</option></select></div>
       <div class="fgp"><label class="fl">Status</label><select class="fse" id="fSt"><option value="paid">Pago</option><option value="pend">Pendente</option><option value="due">Vence Hoje</option><option value="sched">Agendado</option></select></div>
       <div class="fgp"><label class="fl">Vencimento</label><input class="fi" id="fDu" type="date"></div>
@@ -956,13 +976,14 @@ function setCo(c,btn){
 }
 
 // ===== NAV =====
-const pgMap={dashboard:['Dashboard Executivo','Visão geral estratégica'],financeiro:['Gestão Financeira','Lançamentos · Contas · Fluxo de Caixa'],cursos:['Cursos — Rosana Academy','Controle financeiro por curso'],alunos:['Base de Alunos','Rosana Vecchi Academy'],vendedoras:['Vendedoras','Equipe de vendas — NatureFace & Academy'],calendario:['Calendário','Agenda e eventos'],vai:['V.A.I — Assistente','Inteligência artificial executiva']};
+const pgMap={dashboard:['Dashboard Executivo','Visão geral estratégica'],financeiro:['Gestão Financeira','Lançamentos · Contas · Fluxo de Caixa'],carteira:['Carteira','Faturamento · Recebimentos · Agenda de entradas'],cursos:['Cursos — Rosana Academy','Controle financeiro por curso'],alunos:['Base de Alunos','Rosana Vecchi Academy'],vendedoras:['Vendedoras','Equipe de vendas — NatureFace & Academy'],calendario:['Calendário','Agenda e eventos'],vai:['V.A.I — Assistente','Inteligência artificial executiva']};
 function sv(v,el){
   if(el){document.querySelectorAll('.ni').forEach(n=>n.classList.remove('a'));el.classList.add('a');}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('a'));
   const pg=document.getElementById('page-'+v);if(pg)pg.classList.add('a');
   if(pgMap[v]){document.getElementById('tbT').textContent=pgMap[v][0];document.getElementById('tbS').textContent=pgMap[v][1]+' · '+cod[co].name;}
   if(v==='financeiro')renderTx();
+  if(v==='carteira')renderCarteira();
   if(v==='cursos')renderCursos();
   if(v==='alunos')renderAlunos();
   if(v==='calendario')renderCal();
@@ -1281,12 +1302,10 @@ function toggleCursoField(){
 function toggleVendField(){
   const isRec=document.getElementById('fTy')?.value==='receber';
   const vw=document.getElementById('fVendWrap');
-  if(!vw)return;
-  vw.style.display=isRec?'':'none';
-  if(isRec){
-    const sel=document.getElementById('fVend');
-    if(sel){sel.innerHTML='<option value="">— Nenhuma —</option>'+vendedoras.filter(v=>v.status==='ativa').map(v=>`<option value="${v.id}">${v.name}</option>`).join('');}
-  }
+  if(vw)vw.style.display=isRec?'':'none';
+  if(isRec){const sel=document.getElementById('fVend');if(sel){sel.innerHTML='<option value="">— Nenhuma —</option>'+vendedoras.filter(v=>v.status==='ativa').map(v=>`<option value="${v.id}">${v.name}</option>`).join('');}}
+  const fw=document.getElementById('fFpgWrap');
+  if(fw)fw.style.display=isRec?'':'none';
 }
 function toggleRec(){
   const isEdit=!!editTxId;
@@ -1390,6 +1409,7 @@ function openAddTx(){
   const pn=document.getElementById('fParcN');if(pn)pn.value='';
   const pcw=document.getElementById('fParcCustomWrap');if(pcw)pcw.style.display='none';
   const pp=document.getElementById('fParcPreview');if(pp){pp.style.display='none';pp.innerHTML='';}
+  const fpgRst=document.getElementById('fFpg');if(fpgRst)fpgRst.value='';
   populateCursoSelects();toggleCursoField();toggleRec();toggleVendField();checkStu();tgStu('new');
   ['sNm','sEm','sPh','sCp','sSt','sBa','sCe','sCi'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const sc=document.getElementById('sCode');if(sc)sc.value=genStuCode();
@@ -1409,7 +1429,7 @@ function editTx(id){
   const pwE=document.getElementById('fParcWrap');if(pwE)pwE.style.display='none';
   const ppE=document.getElementById('fParcPreview');if(ppE){ppE.style.display='none';ppE.innerHTML='';}
   populateCursoSelects();toggleCursoField();document.getElementById('fCrs').value=t.courseId||'';
-  toggleVendField();setTimeout(()=>{const sv=document.getElementById('fVend');if(sv&&t.vendId)sv.value=t.vendId;},30);
+  toggleVendField();setTimeout(()=>{const sv=document.getElementById('fVend');if(sv&&t.vendId)sv.value=t.vendId;const sf=document.getElementById('fFpg');if(sf&&t.fpg)sf.value=t.fpg;},30);
   checkStu();const linked=students.find(s=>s.txId===id);
   if(linked){tgStu('exist');setTimeout(()=>{const sel=document.getElementById('sExSel');if(sel){sel.value=linked.id;previewExistStu();}},60);}else tgStu('new');
   document.getElementById('txModal').classList.add('o');
@@ -1418,7 +1438,8 @@ function saveTx(){
   const name=document.getElementById('fNm').value.trim();if(!name){document.getElementById('fNm').focus();return;}
   const existCat=editTxId?(txs.find(x=>x.id===editTxId)?.cat||''):'';
   const vendIdRaw=document.getElementById('fVend')?.value;
-  const tx={id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,vendId:vendIdRaw?parseInt(vendIdRaw):null,status:document.getElementById('fSt').value,due:document.getElementById('fDu').value||new Date().toISOString().slice(0,10),val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
+  const fpgVal=document.getElementById('fFpg')?.value||'';
+  const tx={id:editTxId||txNid++,name,type:document.getElementById('fTy').value,cat:existCat,co:document.getElementById('fCo').value,courseId:parseInt(document.getElementById('fCrs').value)||null,vendId:vendIdRaw?parseInt(vendIdRaw):null,fpg:fpgVal,status:document.getElementById('fSt').value,due:document.getElementById('fDu').value||new Date().toISOString().slice(0,10),val:parseFloat(document.getElementById('fVl').value)||0,notes:document.getElementById('fNo').value};
   // Parcelamento (só para novos lançamentos)
   if(!editTxId){
     const rawPN=document.getElementById('fParcN')?.value;
@@ -1690,6 +1711,79 @@ function renderVendDesemp(){
   wrap.innerHTML=html;
 }
 
+// ===== CARTEIRA =====
+function initCarteiraFilter(){
+  const sel=document.getElementById('carteiraFiltMes');if(!sel||sel.options.length>1)return;
+  const now=new Date();const mNames=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  for(let i=0;i<12;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const val=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');const opt=document.createElement('option');opt.value=val;opt.textContent=mNames[d.getMonth()]+' '+d.getFullYear();if(i===0)opt.selected=true;sel.appendChild(opt);}
+}
+function renderCarteira(){
+  initCarteiraFilter();
+  const selMes=document.getElementById('carteiraFiltMes')?.value;
+  const selCo=document.getElementById('carteiraFiltCo')?.value||'';
+  const now=new Date();const todayStr=now.toISOString().slice(0,10);
+  const weekEnd=new Date(now);weekEnd.setDate(now.getDate()+6);const weekEndStr=weekEnd.toISOString().slice(0,10);
+  const m30=new Date(now);m30.setDate(now.getDate()+30);const m30Str=m30.toISOString().slice(0,10);
+  const fmt=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fpgLabel={pix:'PIX',debito:'Débito',credito:'Crédito',boleto:'Boleto',transferencia:'Transf.',dinheiro:'Dinheiro',''  :''};
+  const coLabel={nf:'NatureFace',rv:'Academy'};
+  const coBadge=c=>c==='nf'?'<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(196,128,127,.15);color:#955251">NF</span>':'<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(149,82,81,.12);color:#6B2F2E">Academy</span>';
+  // All receitas filter by co
+  var allRec=txs.filter(function(t){return t.type==='receber'&&(!selCo||t.co===selCo);});
+  // Faturamento = receitas whose due falls in selected month (or that were recorded in that month)
+  var fatTxs=allRec.filter(function(t){return!selMes||(t.due&&t.due.startsWith(selMes));});
+  var fatTotal=fatTxs.reduce(function(s,t){return s+t.val;},0);
+  var recTotal=fatTxs.filter(function(t){return t.status==='paid';}).reduce(function(s,t){return s+t.val;},0);
+  var pendTotal=fatTxs.filter(function(t){return t.status!=='paid';}).reduce(function(s,t){return s+t.val;},0);
+  var atrasTotal=fatTxs.filter(function(t){return t.status!=='paid'&&t.due&&t.due<todayStr;}).reduce(function(s,t){return s+t.val;},0);
+  // KPIs
+  var kDiv=document.getElementById('carteiraKpis');
+  if(kDiv){
+    kDiv.innerHTML='<div class="kc m"><div class="klbl">Faturamento</div><div class="kval">'+fmt(fatTotal)+'</div><div class="kft"><span class="kpr">total de vendas no período</span></div></div>'+
+    '<div class="kc g"><div class="klbl">Recebido</div><div class="kval">'+fmt(recTotal)+'</div><div class="kft"><span class="kpr">'+(fatTotal?Math.round(recTotal/fatTotal*100):0)+'% do faturamento</span></div></div>'+
+    '<div class="kc o"><div class="klbl">A Receber</div><div class="kval">'+fmt(pendTotal)+'</div><div class="kft"><span class="kpr">entradas previstas</span></div></div>'+
+    '<div class="kc '+(atrasTotal>0?'m':'g')+'"><div class="klbl">Atrasado</div><div class="kval">'+fmt(atrasTotal)+'</div><div class="kft"><span class="kpr '+(atrasTotal>0?'re':'gr')+'">'+(atrasTotal>0?'⚠️ vencido não pago':'✓ em dia')+'</span></div></div>';
+  }
+  // Agenda — all pending from ALL time for this co (not just selected month)
+  var pending=allRec.filter(function(t){return t.status!=='paid';}).sort(function(a,b){return(a.due||'').localeCompare(b.due||'');});
+  var paid=fatTxs.filter(function(t){return t.status==='paid';}).sort(function(a,b){return(b.due||'').localeCompare(a.due||'');});
+  function txRow(t){
+    var v=vendedoras.find(function(x){return x.id===t.vendId;});
+    var vName=v?'<span style="font-size:11px;color:var(--t3)">'+v.name.split(' ')[0]+'</span>':'';
+    var fpg=t.fpg?'<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:var(--blb);color:var(--bl);font-weight:600">'+fpgLabel[t.fpg]+'</span>':'';
+    var parc=t.parcelaNum?'<span style="font-size:10px;font-weight:700;color:var(--gdd);background:var(--gdp);padding:2px 6px;border-radius:4px">'+t.parcelaNum+'/'+t.parcelaTotal+'</span>':'';
+    return'<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--bdr)">'+
+      '<div style="min-width:72px;font-size:12px;font-weight:600;color:var(--t2)">'+fmtDateShort(t.due)+'</div>'+
+      '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+t.name+'</div>'+
+      '<div style="display:flex;align-items:center;gap:5px;margin-top:3px">'+coBadge(t.co)+vName+fpg+parc+'</div></div>'+
+      '<div style="font-size:14px;font-weight:700;color:var(--gr);white-space:nowrap">'+fmt(t.val)+'</div></div>';
+  }
+  function section(title,icon,items,emptyMsg,extra){
+    if(!items.length)return'<div class="sc" style="margin-bottom:14px"><div style="padding:12px 16px;display:flex;align-items:center;gap:8px"><span style="font-size:16px">'+icon+'</span><span style="font-size:13.5px;font-weight:700;color:var(--t2)">'+title+'</span><span style="margin-left:auto;font-size:12px;color:var(--t3)">'+emptyMsg+'</span></div></div>';
+    var tot=items.reduce(function(s,t){return s+t.val;},0);
+    return'<div class="sc" style="margin-bottom:14px"><div style="padding:12px 16px 10px;display:flex;align-items:center;gap:8px;border-bottom:1.5px solid var(--bdr)">'+
+      '<span style="font-size:16px">'+icon+'</span><span style="font-size:13.5px;font-weight:700;color:var(--t2)">'+title+'</span>'+
+      '<span style="font-size:12px;color:var(--t3);margin-left:4px">'+items.length+' entrada'+(items.length>1?'s':'')+'</span>'+
+      (extra||'')+'<span style="margin-left:auto;font-size:14px;font-weight:800;color:var(--gr)">'+fmt(tot)+'</span></div>'+
+      items.map(txRow).join('')+'</div>';
+  }
+  var atras=pending.filter(function(t){return t.due&&t.due<todayStr;});
+  var hoje=pending.filter(function(t){return t.due===todayStr;});
+  var semana=pending.filter(function(t){return t.due&&t.due>todayStr&&t.due<=weekEndStr;});
+  var mes30=pending.filter(function(t){return t.due&&t.due>weekEndStr&&t.due<=m30Str;});
+  var apos=pending.filter(function(t){return !t.due||(t.due&&t.due>m30Str);});
+  var ag=document.getElementById('carteiraAgenda');
+  if(ag){
+    ag.innerHTML=
+      section('Atrasado','🔴',atras,'nada atrasado ✓')+
+      section('Vence Hoje','⚡',hoje,'nada hoje')+
+      section('Esta Semana','📅',semana,'nada esta semana')+
+      section('Próximos 30 dias','🗓',mes30,'nada nos próximos 30 dias')+
+      section('Após 30 dias','📆',apos,'sem entradas futuras')+
+      (paid.length?section('Recebido no Período','✅',paid,''):'');
+  }
+}
+
 function renderVendedoras(){
   const body=document.getElementById('vendBody');if(!body)return;
   const q=(document.getElementById('vendSrch')?.value||'').toLowerCase();
@@ -1944,6 +2038,7 @@ function refreshCurrentPage(){
   const id=cur.id;
   if(id==='page-dashboard')updateDashCharts();
   else if(id==='page-financeiro')renderTx();
+  else if(id==='page-carteira')renderCarteira();
   else if(id==='page-cursos')renderCursos();
   else if(id==='page-alunos')renderAlunos();
   else if(id==='page-vendedoras'){renderVendedoras();if(document.getElementById('vendSecDesemp')?.style.display!=='none')renderVendDesemp();}
