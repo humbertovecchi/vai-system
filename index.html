@@ -1204,9 +1204,9 @@ function updateDashCharts(){
     for(var mi=0;mi<=curMo;mi++){
       const mk=yr+'-'+String(mi+1).padStart(2,'0');
       labels.push(mNames[mi]);
-      nfAcc+=txs.filter(function(t){return t.co==='nf'&&t.type==='receber'&&t.due&&t.due.startsWith(mk);}).reduce(function(s,t){return s+t.val;},0);
-      rvAcc+=txs.filter(function(t){return t.co==='rv'&&t.type==='receber'&&t.due&&t.due.startsWith(mk);}).reduce(function(s,t){return s+t.val;},0);
-      ctAcc+=txs.filter(function(t){return t.co==='ct'&&t.type==='receber'&&t.due&&t.due.startsWith(mk);}).reduce(function(s,t){return s+t.val;},0);
+      nfAcc+=txs.filter(function(t){return t.co==='nf'&&t.type==='receber'&&t.due&&t.due.startsWith(mk);}).reduce(function(s,t){return s+fatVal(t);},0);
+      rvAcc+=txs.filter(function(t){return t.co==='rv'&&t.type==='receber'&&t.due&&t.due.startsWith(mk);}).reduce(function(s,t){return s+fatVal(t);},0);
+      ctAcc+=txs.filter(function(t){return t.co==='ct'&&t.type==='receber'&&t.due&&t.due.startsWith(mk);}).reduce(function(s,t){return s+fatVal(t);},0);
       nfD.push(nfAcc);rvD.push(rvAcc);ctD.push(ctAcc);
     }
     charts.rev.data.labels=labels;
@@ -1228,8 +1228,8 @@ function updateDashCharts(){
     const curRec=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&t.due&&t.due.startsWith(curM);});
     const curPag=txs.filter(function(t){return coFilt(t)&&t.type==='pagar'&&t.due&&t.due.startsWith(curM);});
     const prevRec=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&t.due&&t.due.startsWith(prevM);});
-    const fatAtual=curRec.reduce(function(s,t){return s+t.val;},0);
-    const fatPrev=prevRec.reduce(function(s,t){return s+t.val;},0);
+    const fatAtual=curRec.reduce(function(s,t){return s+fatVal(t);},0);
+    const fatPrev=prevRec.reduce(function(s,t){return s+fatVal(t);},0);
     const despAtual=curPag.reduce(function(s,t){return s+t.val;},0);
     const lucro=fatAtual-despAtual;
     const contasRec=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&t.status!=='paid';}).reduce(function(s,t){return s+t.val;},0);
@@ -1255,7 +1255,7 @@ function updateDashCharts(){
   if(charts.vend){
     const totals={};
     vendedoras.forEach(v=>{totals[v.id]=0;});
-    txs.filter(t=>t.co==='nf'&&t.type==='receber'&&t.vendId).forEach(t=>{if(totals[t.vendId]!==undefined)totals[t.vendId]+=t.val;else totals[t.vendId]=t.val;});
+    txs.filter(t=>t.co==='nf'&&t.type==='receber'&&t.vendId).forEach(t=>{const v=fatVal(t);if(totals[t.vendId]!==undefined)totals[t.vendId]+=v;else totals[t.vendId]=v;});
     const vLabels=vendedoras.map(v=>v.name.split(' ')[0]+' '+v.name.split(' ')[1]);
     const vData=vendedoras.map(v=>totals[v.id]||0);
     charts.vend.data.labels=vLabels;
@@ -1266,7 +1266,7 @@ function updateDashCharts(){
   if(charts.rd){
     const now=new Date();const rdRec={};const rdDes={};const rdLabels=[];
     for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;const lbl=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][d.getMonth()]+'/'+String(d.getFullYear()).slice(2);rdLabels.push(lbl);rdRec[k]=0;rdDes[k]=0;}
-    txs.forEach(t=>{const k=t.due?t.due.slice(0,7):'';if(rdRec[k]!==undefined){if(t.type==='receber')rdRec[k]+=t.val;else rdDes[k]+=t.val;}});
+    txs.forEach(t=>{const k=t.due?t.due.slice(0,7):'';if(rdRec[k]!==undefined){if(t.type==='receber')rdRec[k]+=fatVal(t);else if(!t.parcelaNum||t.parcelaNum===1)rdDes[k]+=fatVal(t);}});
     const keys=Object.keys(rdRec);
     charts.rd.data.labels=rdLabels;
     charts.rd.data.datasets[0].data=keys.map(k=>rdRec[k]);
@@ -1275,9 +1275,9 @@ function updateDashCharts(){
   }
   // --- Distribuição por Empresa ---
   if(charts.empresa){
-    const nfTot=txs.filter(t=>t.co==='nf'&&t.type==='receber').reduce((s,t)=>s+t.val,0);
-    const rvTot=txs.filter(t=>t.co==='rv'&&t.type==='receber').reduce((s,t)=>s+t.val,0);
-    const ctTot=txs.filter(t=>t.co==='ct'&&t.type==='receber').reduce((s,t)=>s+t.val,0);
+    const nfTot=txs.filter(t=>t.co==='nf'&&t.type==='receber').reduce((s,t)=>s+fatVal(t),0);
+    const rvTot=txs.filter(t=>t.co==='rv'&&t.type==='receber').reduce((s,t)=>s+fatVal(t),0);
+    const ctTot=txs.filter(t=>t.co==='ct'&&t.type==='receber').reduce((s,t)=>s+fatVal(t),0);
     const total=nfTot+rvTot+ctTot||1;
     charts.empresa.data.datasets[0].data=[Math.round(nfTot/total*100),Math.round(rvTot/total*100),Math.round(ctTot/total*100)];
     charts.empresa.update();
@@ -1300,13 +1300,13 @@ function updateInsights(){
   const curM=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0');
   const prev=new Date(today.getFullYear(),today.getMonth()-1,1);
   const prevM=prev.getFullYear()+'-'+String(prev.getMonth()+1).padStart(2,'0');
-  const fatCur=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&t.due&&t.due.startsWith(curM);}).reduce(function(s,t){return s+t.val;},0);
-  const fatPrev=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&t.due&&t.due.startsWith(prevM);}).reduce(function(s,t){return s+t.val;},0);
+  const fatCur=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&t.due&&t.due.startsWith(curM);}).reduce(function(s,t){return s+fatVal(t);},0);
+  const fatPrev=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&t.due&&t.due.startsWith(prevM);}).reduce(function(s,t){return s+fatVal(t);},0);
   const growPct=fatPrev>0?Math.round((fatCur-fatPrev)/fatPrev*100):null;
   // Receita do mês por empresa (para highlight)
-  const nfCur=txs.filter(function(t){return t.co==='nf'&&t.type==='receber'&&t.due&&t.due.startsWith(curM);}).reduce(function(s,t){return s+t.val;},0);
-  const rvCur=txs.filter(function(t){return t.co==='rv'&&t.type==='receber'&&t.due&&t.due.startsWith(curM);}).reduce(function(s,t){return s+t.val;},0);
-  const ctCur=txs.filter(function(t){return t.co==='ct'&&t.type==='receber'&&t.due&&t.due.startsWith(curM);}).reduce(function(s,t){return s+t.val;},0);
+  const nfCur=txs.filter(function(t){return t.co==='nf'&&t.type==='receber'&&t.due&&t.due.startsWith(curM);}).reduce(function(s,t){return s+fatVal(t);},0);
+  const rvCur=txs.filter(function(t){return t.co==='rv'&&t.type==='receber'&&t.due&&t.due.startsWith(curM);}).reduce(function(s,t){return s+fatVal(t);},0);
+  const ctCur=txs.filter(function(t){return t.co==='ct'&&t.type==='receber'&&t.due&&t.due.startsWith(curM);}).reduce(function(s,t){return s+fatVal(t);},0);
   // Montar insights
   var items=[];
   if(hoje.length>0){
@@ -1820,7 +1820,19 @@ function saveTx(){
   }
   closeM('txModal');renderTx();saveData();if(document.getElementById('page-cursos').classList.contains('a'))renderCursos();
 }
-function delTx(id){if(!confirm('Excluir este lançamento?'))return;txs=txs.filter(t=>t.id!==id);renderTx();saveData();}
+function delTx(id){
+  const t=txs.find(x=>x.id===id);if(!t)return;
+  if(t.grupoId){
+    const cnt=txs.filter(x=>x.grupoId===t.grupoId).length;
+    if(cnt>1){
+      const all=confirm('Este lançamento faz parte de um grupo de '+cnt+' parcelas.\n\nOK → Excluir TODAS as '+cnt+' parcelas\nCancelar → Excluir somente esta');
+      txs=all?txs.filter(x=>x.grupoId!==t.grupoId):txs.filter(x=>x.id!==id);
+      renderTx();saveData();return;
+    }
+  }
+  if(!confirm('Excluir este lançamento?'))return;
+  txs=txs.filter(x=>x.id!==id);renderTx();saveData();
+}
 
 // ===== STUDENTS =====
 function genStuCode(){return 'RVA'+String(stuNcode).padStart(3,'0');}
@@ -2095,6 +2107,11 @@ function getTaxa(t){
   return(rate||0)/100;
 }
 function valLiq(t){return t.val*(1-getTaxa(t));}
+// Valor bruto para fins de faturamento: soma o grupo inteiro apenas na 1ª parcela
+function fatVal(t){
+  if(t.parcelaNum){return t.parcelaNum===1?t.val*(t.parcelaTotal||1):0;}
+  return t.val;
+}
 
 // ===== CARTEIRA =====
 function initCarteiraFilter(){
