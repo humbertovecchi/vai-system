@@ -805,7 +805,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
             <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Elo Débito</label><div style="display:flex;gap:4px;margin-top:4px;align-items:center"><input class="finp" id="txEloDeb" type="number" step="0.01" min="0" max="20"><input class="finp" id="txEloDebPrazo" type="number" step="1" min="0" max="999" style="width:38px" title="Dias para recebimento"></div></div>
             <div><label style="font-size:12px;font-weight:600;color:var(--t2)">Outros Débito</label><div style="display:flex;gap:4px;margin-top:4px;align-items:center"><input class="finp" id="txOutrosDeb" type="number" step="0.01" min="0" max="20"><input class="finp" id="txOutrosDebPrazo" type="number" step="1" min="0" max="999" style="width:38px" title="Dias para recebimento"></div></div>
           </div>
-          <div style="display:flex;gap:10px;margin-top:4px">
+          <div style="display:flex;gap:8px;margin-top:4px;align-items:center">
+            <button class="bs" onclick="resetTaxaTabDefaults()" style="font-size:12px;padding:7px 10px" title="Zera todas as taxas desta empresa/canal para os valores padrão do sistema">↺ Padrões</button>
             <button class="bs" onclick="closeM('taxasModal')" style="flex:1">Cancelar</button>
             <button class="bp" onclick="saveTaxas()" style="flex:1">Salvar Tudo</button>
           </div>
@@ -2245,6 +2246,16 @@ function saveTaxas(){
   closeM('taxasModal');
   saveData();
   renderCarteira();
+}
+function resetTaxaTabDefaults(){
+  const co=_taxaTab||'nf';
+  const canal=_taxaCanal||'online';
+  const coName={nf:'NatureFace',rv:'Rosana Academy',ct:'Consultório'}[co]||co;
+  const canalName=canal==='maquininha'?'Maquininha':'Online';
+  if(!confirm('Restaurar todos os valores padrão para '+coName+' ('+canalName+')?\n\nPIX=0%, Boleto=2%, Débito ~1.49%, Crédito ~2.99–3.5%\n\nOs valores atuais serão substituídos.'))return;
+  const store=canal==='maquininha'?taxasMaq:taxas;
+  store[co]={...taxasDef};
+  _loadTaxaFields(co,canal);
 }
 function taxaKey(t){
   const fpg=t.fpg||'';
