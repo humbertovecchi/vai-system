@@ -1530,7 +1530,8 @@ function renderTx(){
     else if(filterGrupo){const cnt=txs.filter(t=>t.grupoId===filterGrupo).length;bannerEl.style.display='';bannerEl.innerHTML=`🔗 Exibindo grupo <strong>${filterGrupo}</strong> — ${cnt} parcelas <button onclick="clearGrupoFilter()">✕ Limpar</button>`;}
     else{bannerEl.style.display='none';}
   }
-  const showAllStatus=ftab==='pagar'&&(subftab==='apagar'||subftab==='avencer');
+  // Todos e Contas a Receber mostram todos os status; Pagar/Pagas mostra só paid
+  const showAllStatus=ftab==='todos'||ftab==='receber'||(ftab==='pagar'&&(subftab==='apagar'||subftab==='avencer'));
   let list=txs.filter(t=>{
     // Busca por texto: ignora filtros de empresa/mês/tab quando há busca ativa
     if(srch){
