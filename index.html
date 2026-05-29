@@ -542,10 +542,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
       </div>
       <div class="sc" style="border-radius:var(--r)">
         <div class="sh"><div class="st">V.A.I — Insights</div><button class="lnk" onclick="sv('vai',null)">Abrir →</button></div>
-        <div class="nr"><div class="nic" style="background:var(--grb)">🚀</div><div style="flex:1"><div class="ntt">Meta atingida</div><div class="nds">Academy superou a meta em 23%</div></div></div>
-        <div class="nr"><div class="nic" style="background:var(--orb)">⚠️</div><div style="flex:1"><div class="ntt">3 contas vencem hoje</div><div class="nds">R$ 8.640 a vencer</div></div></div>
-        <div class="nr"><div class="nic" style="background:var(--mp)">📈</div><div style="flex:1"><div class="ntt">Pico de matrículas</div><div class="nds">+40% nos últimos 3 dias</div></div></div>
-        <div class="nr"><div class="nic" style="background:var(--blb)">💡</div><div style="flex:1"><div class="ntt">Sugestão de economia</div><div class="nds">-12% em custos possível</div></div></div>
+        <div id="dashInsights"><div style="padding:12px 16px;font-size:12px;color:var(--t3)">Carregando...</div></div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:22px">
@@ -1119,7 +1116,7 @@ function setCo(c,btn){
   s('kI',d.inad);s('kT',d.tick);s('kC',d.cli);s('kRo',d.roi);
   updateDashCharts();
   document.getElementById('tbS').textContent=document.getElementById('tbS').textContent.replace(/·.*$/,'· '+d.name);
-  if(charts.rev){charts.rev.data.datasets[0].hidden=c==='rv';charts.rev.data.datasets[1].hidden=c==='nf';charts.rev.update();}
+  if(charts.rev)updateDashCharts();
   // Nav visibility per empresa
   const isRV=c==='rv';
   const isCT=c==='ct';
@@ -1157,9 +1154,8 @@ let charts={};
 function _tip(cb){return{backgroundColor:'#fff',borderColor:'#E0D2D2',borderWidth:1.5,titleColor:'#1A0707',bodyColor:'#5C3535',padding:10,callbacks:cb};}
 function initCharts(){
   Chart.defaults.color='#A07070';Chart.defaults.font.family="'DM Sans',sans-serif";Chart.defaults.font.size=12.5;
-  var months=['Jan','Fev','Mar','Abr','Mai','Jun','Jul'];
   var rc=document.getElementById('revChart');
-  if(rc)charts.rev=new Chart(rc.getContext('2d'),{type:'line',data:{labels:months,datasets:[{label:'NatureFace',data:[82000,91000,105000,118000,126000,138000,148200],borderColor:'#C4807F',backgroundColor:'rgba(196,128,127,.09)',borderWidth:2.5,tension:.42,pointRadius:4,pointBackgroundColor:'#C4807F',fill:true},{label:'Rosana Academy',data:[55000,68000,82000,96000,110000,124000,136550],borderColor:'#955251',backgroundColor:'rgba(149,82,81,.09)',borderWidth:2.5,tension:.42,pointRadius:4,pointBackgroundColor:'#955251',fill:true}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:_tip({label:function(c){return' R$ '+c.raw.toLocaleString('pt-BR');}})},scales:{x:{grid:{color:'rgba(0,0,0,.05)'},border:{color:'transparent'}},y:{grid:{color:'rgba(0,0,0,.05)'},border:{color:'transparent'},ticks:{callback:function(v){return'R$'+(v/1000).toFixed(0)+'k';}}}}}});
+  if(rc)charts.rev=new Chart(rc.getContext('2d'),{type:'line',data:{labels:[],datasets:[{label:'NatureFace',data:[],borderColor:'#C4807F',backgroundColor:'rgba(196,128,127,.09)',borderWidth:2.5,tension:.42,pointRadius:4,pointBackgroundColor:'#C4807F',fill:true},{label:'Rosana Academy',data:[],borderColor:'#955251',backgroundColor:'rgba(149,82,81,.09)',borderWidth:2.5,tension:.42,pointRadius:4,pointBackgroundColor:'#955251',fill:true},{label:'Consultório',data:[],borderColor:'#7B9E87',backgroundColor:'rgba(123,158,135,.08)',borderWidth:2.5,tension:.42,pointRadius:4,pointBackgroundColor:'#7B9E87',fill:true}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:_tip({label:function(c){return' R$ '+c.raw.toLocaleString('pt-BR');}})},scales:{x:{grid:{color:'rgba(0,0,0,.05)'},border:{color:'transparent'}},y:{grid:{color:'rgba(0,0,0,.05)'},border:{color:'transparent'},ticks:{callback:function(v){return'R$'+(v/1000).toFixed(0)+'k';}}}}}});
   // Vendas por Vendedora
   var vc=document.getElementById('vendChart');
   if(vc)charts.vend=new Chart(vc.getContext('2d'),{type:'bar',data:{labels:[],datasets:[{label:'Receita (R$)',data:[],backgroundColor:['#C4A55A','#955251','#C4807F','#9A7D3A'],borderRadius:6,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},tooltip:_tip({label:function(c){return' R$ '+c.raw.toLocaleString('pt-BR');}})},scales:{x:{grid:{color:'rgba(0,0,0,.05)'},border:{color:'transparent'},ticks:{callback:function(v){return'R$'+(v/1000).toFixed(0)+'k';}}},y:{grid:{display:false},border:{color:'transparent'}}}}});
@@ -1173,6 +1169,29 @@ function initCharts(){
 }
 function updateDashCharts(){
   if(!charts.vend&&!charts.rd&&!charts.empresa)return;
+  // ===== Gráfico Faturamento Acumulado =====
+  if(charts.rev){
+    const yr=new Date().getFullYear();
+    const curMo=new Date().getMonth();
+    const mNames=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const labels=[];var nfAcc=0,rvAcc=0,ctAcc=0;var nfD=[],rvD=[],ctD=[];
+    for(var mi=0;mi<=curMo;mi++){
+      const mk=yr+'-'+String(mi+1).padStart(2,'0');
+      labels.push(mNames[mi]);
+      nfAcc+=txs.filter(function(t){return t.co==='nf'&&t.type==='receber'&&t.due&&t.due.startsWith(mk);}).reduce(function(s,t){return s+t.val;},0);
+      rvAcc+=txs.filter(function(t){return t.co==='rv'&&t.type==='receber'&&t.due&&t.due.startsWith(mk);}).reduce(function(s,t){return s+t.val;},0);
+      ctAcc+=txs.filter(function(t){return t.co==='ct'&&t.type==='receber'&&t.due&&t.due.startsWith(mk);}).reduce(function(s,t){return s+t.val;},0);
+      nfD.push(nfAcc);rvD.push(rvAcc);ctD.push(ctAcc);
+    }
+    charts.rev.data.labels=labels;
+    charts.rev.data.datasets[0].data=nfD;
+    charts.rev.data.datasets[1].data=rvD;
+    charts.rev.data.datasets[2].data=ctD;
+    charts.rev.data.datasets[2].hidden=ctAcc===0;
+    charts.rev.update();
+    // Atualizar título do gráfico
+    const ct=document.querySelector('.ct');if(ct)ct.textContent='Faturamento '+yr;
+  }
   // ===== KPIs dinâmicos =====
   (function(){
     const now2=new Date();
@@ -1237,6 +1256,54 @@ function updateDashCharts(){
     charts.empresa.data.datasets[0].data=[Math.round(nfTot/total*100),Math.round(rvTot/total*100),Math.round(ctTot/total*100)];
     charts.empresa.update();
   }
+  updateInsights();
+}
+function updateInsights(){
+  const el=document.getElementById('dashInsights');if(!el)return;
+  const today=new Date();today.setHours(0,0,0,0);
+  const todayStr=today.toISOString().slice(0,10);
+  const coFilt=function(t){return co==='all'||t.co===co;};
+  const pending=txs.filter(function(t){return coFilt(t)&&t.status!=='paid';});
+  // Vencem hoje
+  const hoje=pending.filter(function(t){return t.due===todayStr;});
+  const hojeVal=hoje.reduce(function(s,t){return s+t.val;},0);
+  // Em atraso (vencidos, não pagos)
+  const atraso=pending.filter(function(t){return t.due&&t.due<todayStr;});
+  const atrasoVal=atraso.reduce(function(s,t){return s+t.val;},0);
+  // Faturamento mês atual vs anterior
+  const curM=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0');
+  const prev=new Date(today.getFullYear(),today.getMonth()-1,1);
+  const prevM=prev.getFullYear()+'-'+String(prev.getMonth()+1).padStart(2,'0');
+  const fatCur=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&t.due&&t.due.startsWith(curM);}).reduce(function(s,t){return s+t.val;},0);
+  const fatPrev=txs.filter(function(t){return coFilt(t)&&t.type==='receber'&&t.due&&t.due.startsWith(prevM);}).reduce(function(s,t){return s+t.val;},0);
+  const growPct=fatPrev>0?Math.round((fatCur-fatPrev)/fatPrev*100):null;
+  // Receita do mês por empresa (para highlight)
+  const nfCur=txs.filter(function(t){return t.co==='nf'&&t.type==='receber'&&t.due&&t.due.startsWith(curM);}).reduce(function(s,t){return s+t.val;},0);
+  const rvCur=txs.filter(function(t){return t.co==='rv'&&t.type==='receber'&&t.due&&t.due.startsWith(curM);}).reduce(function(s,t){return s+t.val;},0);
+  const ctCur=txs.filter(function(t){return t.co==='ct'&&t.type==='receber'&&t.due&&t.due.startsWith(curM);}).reduce(function(s,t){return s+t.val;},0);
+  // Montar insights
+  var items=[];
+  if(hoje.length>0){
+    items.push({icon:'⚠️',bg:'var(--orb)',title:hoje.length+' conta'+(hoje.length>1?'s':'')+' vence'+(hoje.length>1?'m':'')+' hoje',desc:'R$ '+hojeVal.toLocaleString('pt-BR',{minimumFractionDigits:2})+' a receber/pagar'});
+  }
+  if(atraso.length>0){
+    items.push({icon:'🔴',bg:'rgba(200,80,80,.12)',title:atraso.length+' conta'+(atraso.length>1?'s':'')+' em atraso',desc:'R$ '+atrasoVal.toLocaleString('pt-BR',{minimumFractionDigits:2})+' vencido'+(atraso.length>1?'s':'')});
+  }
+  if(growPct!==null){
+    const up=growPct>=0;
+    items.push({icon:up?'🚀':'📉',bg:up?'var(--grb)':'rgba(200,80,80,.12)',title:(up?'Crescimento':'Queda')+' '+Math.abs(growPct)+'% no mês',desc:'vs mês anterior · R$ '+fatCur.toLocaleString('pt-BR',{minimumFractionDigits:2})});
+  }
+  if(co==='all'&&(nfCur||rvCur||ctCur)){
+    const leader=nfCur>=rvCur&&nfCur>=ctCur?'NatureFace':rvCur>=ctCur?'Rosana Academy':'Consultório';
+    const leaderVal=Math.max(nfCur,rvCur,ctCur);
+    items.push({icon:'🏆',bg:'var(--blb)',title:leader+' lidera no mês',desc:'R$ '+leaderVal.toLocaleString('pt-BR',{minimumFractionDigits:2})+' em receitas'});
+  }
+  if(items.length===0){
+    items.push({icon:'✅',bg:'var(--grb)',title:'Tudo em dia',desc:'Sem pendências para hoje'});
+  }
+  el.innerHTML=items.slice(0,4).map(function(i){
+    return'<div class="nr"><div class="nic" style="background:'+i.bg+'">'+i.icon+'</div><div style="flex:1"><div class="ntt">'+i.title+'</div><div class="nds">'+i.desc+'</div></div></div>';
+  }).join('');
 }
 
 // ===== COURSES =====
