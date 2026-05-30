@@ -935,7 +935,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
       <div class="fgp" id="fFpgWrap" style="display:none"><label class="fl">Forma de Pagamento</label><select class="fse" id="fFpg" onchange="toggleBandeiraField()"><option value="">— Selecione —</option><option value="pix">PIX</option><option value="debito">Débito</option><option value="credito">Crédito</option><option value="boleto">Boleto</option><option value="transferencia">Transferência</option><option value="dinheiro">Dinheiro</option></select></div>
       <div class="fgp" id="fBandeiraWrap" style="display:none"><label class="fl">Bandeira</label><select class="fse" id="fBandeira"><option value="visa">Visa</option><option value="master">Mastercard</option><option value="elo">Elo</option><option value="amex">Amex</option><option value="diners">Diners</option><option value="hipercard">Hipercard</option><option value="outros">Outros</option></select></div>
       <div class="fgp" id="fCanalWrap" style="display:none"><label class="fl">Canal</label><select class="fse" id="fCanal"><option value="online">🌐 Online / Link de Pagamento</option><option value="maquininha">🏪 Maquininha (Loja Física)</option></select></div>
-      <div class="fgp" id="fParcelasWrap" style="display:none"><label class="fl">Parcelas (cartão)</label><select class="fse" id="fParcelas"><option value="1">1x (à vista)</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option></select></div>
+      <div class="fgp" id="fParcelasWrap" style="display:none"><label class="fl">Parcelas no Cartão <span style="font-weight:400;color:var(--t3);font-size:11px">(define a taxa MDR)</span></label><select class="fse" id="fParcelas" onchange="syncParcelasToParcelarEm()"><option value="1">1x (à vista)</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option></select></div>
       <div class="fgp" id="cursoFieldWrap"><label class="fl">Curso (opcional)</label><select class="fse" id="fCrs"><option value="">— Nenhum —</option></select></div>
       <div class="fgp" id="fProcWrap" style="display:none"><label class="fl">Procedimento (opcional)</label><select class="fse" id="fProc"><option value="">— Nenhum —</option></select></div>
       <div class="fgp"><label class="fl">Status</label><select class="fse" id="fSt"><option value="paid">Pago</option><option value="pend">Pendente</option><option value="due">Vence Hoje</option><option value="sched">Agendado</option></select></div>
@@ -943,7 +943,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background
       <div class="fgp"><label class="fl">Valor (R$)</label><input class="fi" id="fVl" type="number" placeholder="0,00" min="0" step="0.01"></div>
       <div class="fgp" id="fRecWrap"><label class="fl">Recorrência</label><select class="fse" id="fRec" onchange="toggleRec()"><option value="">Sem recorrência</option><option value="semanal">Semanal</option><option value="quinzenal">Quinzenal</option><option value="mensal">Mensal</option><option value="bimestral">Bimestral</option><option value="trimestral">Trimestral</option><option value="anual">Anual</option></select></div>
       <div class="fgp" id="fRecQtdWrap" style="display:none"><label class="fl">Repetições</label><input class="fi" id="fRecQtd" type="number" placeholder="Ex: 12" min="2" max="60" value="12"><div style="font-size:11px;color:var(--t3);margin-top:4px">Nº total de parcelas/lançamentos</div></div>
-      <div class="fgp" id="fParcWrap"><label class="fl">Parcelar em</label><select class="fse" id="fParcN" onchange="toggleParc()"><option value="">À vista</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="10">10x</option><option value="12">12x</option><option value="custom">Personalizado...</option></select></div>
+      <div class="fgp" id="fParcWrap"><label class="fl">Dividir na Carteira <span style="font-weight:400;color:var(--t3);font-size:11px">(gera lançamentos mensais)</span></label><select class="fse" id="fParcN" onchange="toggleParc()"><option value="">À vista</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="10">10x</option><option value="12">12x</option><option value="custom">Personalizado...</option></select></div>
       <div class="fgp" id="fParcCustomWrap" style="display:none"><label class="fl">Nº de Parcelas</label><input class="fi" id="fParcCustom" type="number" min="2" max="60" placeholder="Ex: 5" oninput="renderParcPreview()"></div>
       <div class="fgp fc1" id="fParcPreview" style="display:none"></div>
       <div class="fgp fc1" id="fVlRestWrap"><label class="fl">Valor Restante / Saldo Devedor (R$) — Academy</label><input class="fi" id="fVlRest" type="number" placeholder="0,00 — deixe vazio se quitado" min="0" step="0.01"><div style="font-size:11px;color:var(--t3);margin-top:4px">Se preenchido, cria um 2º lançamento pendente automaticamente</div></div>
@@ -1716,10 +1716,22 @@ function toggleBandeiraField(){
   const bw=document.getElementById('fBandeiraWrap');if(bw)bw.style.display=isCard?'':'none';
   const pw=document.getElementById('fParcelasWrap');if(pw)pw.style.display=fpg==='credito'?'':'none';
   const cw=document.getElementById('fCanalWrap');if(cw)cw.style.display=fpg?'':'none';
-  // Cartão já tem "Parcelas (Cartão)" para taxa — esconde "Parcelar em" para evitar duplicidade
+  // "Dividir na Carteira" visível para novas transações (inclusive cartão — sincroniza com Parcelas)
   const parcW=document.getElementById('fParcWrap');
-  if(parcW)parcW.style.display=(isCard||isEdit)?'none':'';
-  if(isCard){const pn=document.getElementById('fParcN');if(pn)pn.value='';const pp=document.getElementById('fParcPreview');if(pp){pp.style.display='none';pp.innerHTML=''};}
+  if(parcW)parcW.style.display=isEdit?'none':'';
+  // Ao trocar para débito/sem cartão, limpa seleção de parcelas do cartão
+  if(!isCard){const pn=document.getElementById('fParcelas');if(pn)pn.value='1';}
+}
+function syncParcelasToParcelarEm(){
+  const n=parseInt(document.getElementById('fParcelas')?.value)||1;
+  const pn=document.getElementById('fParcN');if(!pn)return;
+  // Mapeia para as opções disponíveis em fParcN
+  const opts=['','2','3','4','5','6','7','8','10','12'];
+  const match=opts.includes(String(n))?String(n):(n>1?'custom':'');
+  pn.value=match;
+  if(match==='custom'){const pc=document.getElementById('fParcCustom');if(pc)pc.value=n;}
+  toggleParc();
+  if(n>1)renderParcPreview();
 }
 function toggleProcField(){
   const coVal=document.getElementById('fCo')?.value;
