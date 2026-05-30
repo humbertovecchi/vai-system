@@ -2442,19 +2442,23 @@ function renderCarteira(){
   // pendTotal = todos os futuros pendentes (independe do filtro de mês)
   var pendTotal=allRec.filter(function(t){return t.status!=='paid'&&t.due&&t.due>=todayStr;}).reduce(function(s,t){return s+t.val;},0);
   var pendCnt=allRec.filter(function(t){return t.status!=='paid'&&t.due&&t.due>=todayStr;}).length;
-  // KPIs
-  // prox3Str = fim do 3º mês seguinte (para o donut chart)
+  // KPIs — baseados no período selecionado (fatTxs)
+  var periodoTotal=fatTxs.reduce(function(s,t){return s+t.val;},0);
+  var periodoRecebido=fatTxs.filter(function(t){return t.status==='paid';}).reduce(function(s,t){return s+t.val;},0);
+  var periodoAReceber=fatTxs.filter(function(t){return t.status!=='paid';}).reduce(function(s,t){return s+t.val;},0);
+  var periodoAReceberCnt=fatTxs.filter(function(t){return t.status!=='paid';}).length;
+  // Total futuro global (todos os meses, para referência)
+  var totalFuturo=allRec.filter(function(t){return t.status!=='paid'&&t.due&&t.due>=todayStr;}).reduce(function(s,t){return s+t.val;},0);
+  // prox3Str para o donut chart
   var prox3Str=new Date(now.getFullYear(),now.getMonth()+4,0).toISOString().slice(0,10);
-  // Previsão 3 Meses: soma os 3 próximos meses completos (M+1, M+2, M+3) — exclui mês corrente
-  var prox3Total=0;
-  for(var _pi=1;_pi<=3;_pi++){var _pd=new Date(now.getFullYear(),now.getMonth()+_pi,1);var _pk=_pd.getFullYear()+'-'+String(_pd.getMonth()+1).padStart(2,'0');prox3Total+=allRec.filter(function(t){return t.status!=='paid'&&t.due&&t.due.startsWith(_pk);}).reduce(function(s,t){return s+t.val;},0);}
-  // Total de todos os recebimentos futuros pendentes (qualquer mês)
-  var totalPrevisto=allRec.filter(function(t){return t.status!=='paid'&&t.due&&t.due>=todayStr;}).reduce(function(s,t){return s+t.val;},0);
   var kDiv=document.getElementById('carteiraKpis');
   if(kDiv){
-    kDiv.innerHTML='<div class="kc g"><div class="klbl">Na Carteira</div><div class="kval">'+fmt(carteiraTotal)+'</div><div class="kft"><span class="kpr">líquido'+(carteiraTaxa>0?' · taxa: '+fmt(carteiraTaxa):'')+'</span></div></div>'+
-    (creditoCompTotal>0?'<div class="kc m"><div class="klbl">Crédito a Compensar</div><div class="kval">'+fmt(creditoCompTotal)+'</div><div class="kft"><span class="kpr">💳 ~30 dias'+(creditoTaxa>0?' · taxa: '+fmt(creditoTaxa):'')+'</span></div></div>':'')+
-    '<div class="kc o"><div class="klbl">A Receber</div><div class="kval">'+fmt(pendTotal)+'</div><div class="kft"><span class="kpr">'+pendCnt+' entrada'+(pendCnt!==1?'s':'')+' futuras pendentes</span></div></div>';
+    var periodoLbl=selMes?'no período':'até hoje';
+    kDiv.innerHTML=
+      '<div class="kc g"><div class="klbl">Previsto no Período</div><div class="kval">'+fmt(periodoTotal)+'</div><div class="kft"><span class="kpr">total de entradas esperadas</span></div></div>'+
+      '<div class="kc '+(periodoRecebido>0?'g':'m')+'"><div class="klbl">Já Recebido</div><div class="kval">'+fmt(periodoRecebido)+'</div><div class="kft"><span class="kpr">líq. '+fmt(periodoRecebido*(1-(carteiraTaxa>0?carteiraTaxa/recTotal:0)))+' após MDR</span></div></div>'+
+      '<div class="kc o"><div class="klbl">A Receber</div><div class="kval">'+fmt(periodoAReceber)+'</div><div class="kft"><span class="kpr">'+periodoAReceberCnt+' entrada'+(periodoAReceberCnt!==1?'s':'')+' pendente'+(periodoAReceberCnt!==1?'s':'')+' '+periodoLbl+'</span></div></div>'+
+      (totalFuturo>0&&selMes?'<div class="kc m"><div class="klbl">Total Futuro</div><div class="kval">'+fmt(totalFuturo)+'</div><div class="kft"><span class="kpr">📈 todos os meses pendentes</span></div></div>':'');
   }
   // ===== BREAKDOWN POR MODALIDADE =====
   var modDiv=document.getElementById('carteiraMod');
