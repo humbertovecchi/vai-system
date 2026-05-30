@@ -1712,9 +1712,14 @@ function updateCanalOptions(co){
 function toggleBandeiraField(){
   const fpg=document.getElementById('fFpg')?.value;
   const isCard=fpg==='credito'||fpg==='debito';
+  const isEdit=!!editTxId;
   const bw=document.getElementById('fBandeiraWrap');if(bw)bw.style.display=isCard?'':'none';
   const pw=document.getElementById('fParcelasWrap');if(pw)pw.style.display=fpg==='credito'?'':'none';
   const cw=document.getElementById('fCanalWrap');if(cw)cw.style.display=fpg?'':'none';
+  // Cartão já tem "Parcelas (Cartão)" para taxa — esconde "Parcelar em" para evitar duplicidade
+  const parcW=document.getElementById('fParcWrap');
+  if(parcW)parcW.style.display=(isCard||isEdit)?'none':'';
+  if(isCard){const pn=document.getElementById('fParcN');if(pn)pn.value='';const pp=document.getElementById('fParcPreview');if(pp){pp.style.display='none';pp.innerHTML=''};}
 }
 function toggleProcField(){
   const coVal=document.getElementById('fCo')?.value;
